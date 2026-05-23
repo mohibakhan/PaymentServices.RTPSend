@@ -15,6 +15,12 @@ namespace PaymentServices.RTPSend.Functions;
 /// with Subject = "CreatePaymentRequest" so outcome envelopes for other
 /// services are ignored.
 ///
+/// Calls <see cref="IPaymentOrchestrator.ResumeFromAsync"/> rather than
+/// ProcessAsync so SB redeliveries are stage-aware — a retry after a TabaPay
+/// failure picks up at TabaPay only, without re-running PartnerLedger / Limit
+/// / Ledger. On the very first delivery the payment is in stage RTP_API, so
+/// resume starts at PartnerLedger as expected.
+///
 /// Behavior on failure: any exception bubbles up, SB increments the message's
 /// delivery count, and after MaxDeliveryCount the message is automatically
 /// dead-lettered. The <c>RetryFailedPayments</c> timer drains that DLQ.
@@ -84,8 +90,16 @@ public class ProcessPayment
                 $"No payment document found for evolveId {envelope.EvolveId}");
         }
 
-        _logger.LogInformation("Processing payment evolveId {EvolveId}", envelope.EvolveId);
-        await _orchestrator.ProcessAsync(payment, cancellationToken);
+        _logger.LogInformation(
+            "Processing payment evolveId {EvolveId} at stage {Stage}, status {Status}, delivery {DeliveryCount}",
+            envelope.EvolveId, payment.Stage, payment.Status, message.DeliveryCount);
+
+        // ResumeFromAsync (not ProcessAsync) so SB redeliveries are stage-aware:
+        // a retry after TabaPay failure skips re-running PartnerLedger / Limit /
+        // Ledger and goes straight to TabaPay. On the first delivery the payment
+        // is in stage RTP_API, so this is equivalent to ProcessAsync.
+        await _orchestrator.ResumeFromAsync(payment, cancellationToken);
+
         _logger.LogInformation("Processing completed for evolveId {EvolveId}", envelope.EvolveId);
     }
 }
