@@ -10,6 +10,10 @@
     "//APP_CONFIG_ENDPOINT": "https://<your-app-config>.azconfig.io",
     "APPLICATIONINSIGHTS_CONNECTION_STRING": "<App Insights connection string>",
 
+    "//---- Flat env vars (read by Functions host before worker starts) ----": "",
+    "SERVICE_BUS_CONNSTRING": "<service bus connection string — same value as rtpSend:AppSettings:SERVICE_BUS_CONNSTRING>",
+    "RETRY_TIMER_SCHEDULE": "0 */5 * * * *",
+
     "rtpSend:AppSettings:COSMOS_ENDPOINT": "<https://*.documents.azure.com:443/>",
     "rtpSend:AppSettings:COSMOS_CONNSTRING": "<connection string (omit if using MI)>",
     "rtpSend:AppSettings:COSMOS_DATABASE": "payments",
@@ -29,7 +33,6 @@
     "rtpSend:AppSettings:PARTNER_LEDGER_SPNAME": "<stored proc name>",
 
     "rtpSend:AppSettings:RTP_SEND_TRAN_CODE": "<tran code>",
-    "rtpSend:AppSettings:RETRY_TIMER_SCHEDULE": "0 */5 * * * *",
 
     "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TRAIN": "Digital",
     "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TEAM": "Services"

@@ -1,0 +1,15 @@
+{
+  "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TRAIN": "Digital",
+  "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TEAM": "Services",
+
+  "rtpSend:AppSettings:COSMOS_DATABASE": "payments",
+  "rtpSend:AppSettings:COSMOS_PAYMENT_CONTAINER": "paymentRequests",
+  "rtpSend:AppSettings:COSMOS_PARTNER_LEDGER_CONTAINER": "partnerLedger",
+  "rtpSend:AppSettings:COSMOS_API_CONFIG_CONTAINER": "apiUserConfig",
+  "rtpSend:AppSettings:COSMOS_IDEMPOTENCY_CONTAINER": "paymentIdempotency",
+
+  "rtpSend:AppSettings:TABAPAY_SEND_URL": "https://apitest.getevolved.com/v1/Transactions/Card",
+
+  "rtpSend:AppSettings:PARTNER_LEDGER_SPNAME": "[test].[vAccountFboLookup]",
+  "rtpSend:AppSettings:RTP_SEND_TRAN_CODE": "21"
+}
