@@ -112,6 +112,16 @@ public sealed class EvolvePaymentRequestHelper : IEvolvePaymentRequestHelper
 
     // -------------------------------------------------------------------------
     // Patch-operation builders
+    //
+    // PatchOperation.Set vs Replace:
+    //   - Replace requires the JSON path to already exist on the document.
+    //     If it doesn't, Cosmos returns 400 BadRequest.
+    //   - Set creates the path if missing, replaces it if present (idempotent).
+    //
+    // We use Set for fields that get populated by downstream stages
+    // (partner-ledger lookup, TabaPay response), since those fields may not
+    // exist on the freshly-created document. We use Replace only for fields
+    // that are guaranteed present at creation time (stage, status, etc.).
     // -------------------------------------------------------------------------
 
     public static List<PatchOperation> GetStatusPatchOperation(
@@ -129,20 +139,24 @@ public sealed class EvolvePaymentRequestHelper : IEvolvePaymentRequestHelper
                 Status = status.ToString(),
                 AddInfo = additionalInfo
             }),
+            // These three are always present on the document — Replace is safe.
             PatchOperation.Replace("/stage", stage.ToString()),
             PatchOperation.Replace("/status", status.ToString()),
-            PatchOperation.Replace("/modifiedTimeStamp", timestamp)
+            // modifiedTimeStamp may or may not exist on the initial doc; Set is safer.
+            PatchOperation.Set("/modifiedTimeStamp", timestamp)
         };
     }
 
     public static List<PatchOperation> SetAccountLookupPatchoperation(PartnerLedgerResponse response) =>
         new()
         {
-            PatchOperation.Replace("/fboAccount", response.FboAccount),
-            PatchOperation.Replace("/fboAccountName", response.FboAccountName),
-            PatchOperation.Replace("/fintechId", response.CifNo),
-            PatchOperation.Replace("/taxId", response.TaxId),
-            PatchOperation.Replace("/userIsBusiness", response.IsBusinessUser)
+            // Set instead of Replace — these fields don't exist on the document
+            // until the partner-ledger lookup populates them.
+            PatchOperation.Set("/fboAccount", response.FboAccount),
+            PatchOperation.Set("/fboAccountName", response.FboAccountName),
+            PatchOperation.Set("/fintechId", response.CifNo),
+            PatchOperation.Set("/taxId", response.TaxId),
+            PatchOperation.Set("/userIsBusiness", response.IsBusinessUser)
         };
 
     public static List<PatchOperation> GetTabaPaypatchoperation(
@@ -151,11 +165,12 @@ public sealed class EvolvePaymentRequestHelper : IEvolvePaymentRequestHelper
         string instructionId) =>
         new()
         {
-            PatchOperation.Replace("/tabaPayTransactionId", tabaPayTransactionId),
-            PatchOperation.Replace("/tabaPayReferenceId", tabaPayReferenceId),
-            PatchOperation.Replace("/instructionId", instructionId)
+            // Set instead of Replace — these fields don't exist until TabaPay runs.
+            PatchOperation.Set("/tabaPayTransactionId", tabaPayTransactionId),
+            PatchOperation.Set("/tabaPayReferenceId", tabaPayReferenceId),
+            PatchOperation.Set("/instructionId", instructionId)
         };
 
     public static List<PatchOperation> GetNodeUpdatePatchOperation(string nodeName, string nodeValue) =>
-        new() { PatchOperation.Replace($"/{nodeName}", nodeValue) };
+        new() { PatchOperation.Set($"/{nodeName}", nodeValue) };
 }
