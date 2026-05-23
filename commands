@@ -1,0 +1,48 @@
+cd C:\path\to\your\repos
+mkdir PaymentServices.RTPSend
+cd PaymentServices.RTPSend
+
+rem -- top-level
+type nul > .gitignore
+type nul > .gitattributes
+type nul > PaymentServices.RTPSend.slnx
+
+rem -- deploy_parameters
+mkdir deploy_parameters\DEV
+type nul > deploy_parameters\DEV\dev_ea_env.parameters.json
+type nul > deploy_parameters\DEV\dev_ea_keyvault.parameters.json
+
+rem -- pipelines
+mkdir pipelines
+type nul > pipelines\PaymentServices.RTPSend.yml
+
+rem -- src root
+mkdir src\Properties
+type nul > src\PaymentServices.RTPSend.csproj
+type nul > src\Program.cs
+type nul > src\host.json
+type nul > src\local.settings.example.json
+type nul > src\Properties\launchSettings.json
+type nul > src\Properties\serviceDependencies.json
+type nul > src\Properties\serviceDependencies.local.json
+
+rem -- src subfolders
+mkdir src\Constants
+mkdir src\Exceptions\Core
+mkdir src\Extensions
+mkdir src\Functions
+mkdir src\Helpers\ISO3166
+mkdir src\Interface\Adapters
+mkdir src\Interface\External
+mkdir src\Interface\Services
+mkdir src\Models\Cosmos
+mkdir src\Models\Domain
+mkdir src\Models\Request
+mkdir src\Models\Response
+mkdir src\Providers
+mkdir src\Repositories\Adapters
+mkdir src\Services
+mkdir src\Settings
+mkdir src\Validators
+
+git init
