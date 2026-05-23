@@ -21,8 +21,11 @@ resources:
             - master
 
 variables:
-  FunctionAppName: PaymentServices.RTPSend
-  ArtifactName: PaymentServices.RTPSend
+  - group: PaymentServices.RTPSend-Release
+  - name: FunctionAppName
+    value: PaymentServices.RTPSend
+  - name: ArtifactName
+    value: PaymentServices.RTPSend
 
 stages:
 
