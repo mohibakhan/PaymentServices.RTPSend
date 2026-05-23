@@ -1,20 +1,8 @@
-cd C:\path\to\PaymentServices.RTPSend
+git rm -r --cached bin obj .vs .vscode .idea
+git rm --cached local.settings.json
+git rm --cached src/bin -r
+git rm --cached src/obj -r
+git rm --cached src/local.settings.json
 
-rem -- init the repo
-git init -b main
-
-rem -- configure who you are (skip if already global)
-git config user.name "Your Name"
-git config user.email "your.email@company.com"
-
-rem -- stage everything
+git rm -r --cached .
 git add .
-
-rem -- first commit
-git commit -m "Initial commit: PaymentServices.RTPSend"
-
-rem -- point at ADO
-git remote add origin https://dev.azure.com/{org}/{project}/_git/PaymentServices.RTPSend
-
-rem -- push and set upstream
-git push -u origin main
