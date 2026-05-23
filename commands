@@ -1,8 +1,20 @@
-<!-- Azure Functions -->
-<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
-<PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
-<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
-<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.0" />
-<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.22.0" />
-<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
-<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.OpenApi" Version="1.5.1" />
+cd C:\path\to\PaymentServices.RTPSend
+
+rem -- init the repo
+git init -b main
+
+rem -- configure who you are (skip if already global)
+git config user.name "Your Name"
+git config user.email "your.email@company.com"
+
+rem -- stage everything
+git add .
+
+rem -- first commit
+git commit -m "Initial commit: PaymentServices.RTPSend"
+
+rem -- point at ADO
+git remote add origin https://dev.azure.com/{org}/{project}/_git/PaymentServices.RTPSend
+
+rem -- push and set upstream
+git push -u origin main
