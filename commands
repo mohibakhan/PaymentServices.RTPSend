@@ -1,53 +1,6 @@
-{
-   "paymentReference":"b8613de-1c5e-4736-97ae-f9d6b98a1ad0",
-   "sourceAccountId":null,
-   "sourceAccount":{
-      "accountNumber":"9010010000000001",
-      "name":{
-         "company":null,
-         "first":"Earnin",
-         "last":"Merchant"
-      },
-      "address":null,
-      "routingNumber":"084009593",
-      "accountType":"S",
-      "debtorBankMemberID":null,
-      "debtorIdOther":null
-   },
-   "destinationAccountId":null,
-   "destinationAccount":{
-      "accountNumber":"900397187386253",
-      "name":{
-         "company":null,
-         "first":"Sarah",
-         "last":"Robinson"
-      },
-      "routingNumber":"101115315",
-      "accountType":"C",
-      "address":{
-         "addressLines":[
-            "123 First Street"
-         ],
-         "city":"Omaha",
-         "county":null,
-         "countryISOCode":"840",
-         "postalCode":"",
-         "stateCode":"NE"
-      },
-      "phoneNumber":"4022221144",
-      "creditorAgentTCHMemberID":null,
-      "creditorIdOther":null
-   },
-   "amount":"0.90",
-   "ultimateDebtor":{
-      "name":"ultimate"
-   },
-   "sourceCurrency":null,
-   "paymentCurrency":null,
-   "softDescriptor":{
-      "name":"Test Merchant",
-      "email":null,
-      "phone":null,
-      "address":null
-   }
-}
+cosmos: cosmos-paymentservices-dev-centralus, cosmos-paymentservices-qa-centralus, cosmosdb-pmtsvc-prod-eastus
+service bus namespace: sb-pmtsvc-dev-centralus, sb-pmtsvc-qa-centralus, sb-pmtsvc-prod-eastus
+resource groups: rg-pmtsvc-dev, rg-pmtsvc-qa, rg-pmtsvc-prod,
+app configuration: appcs-pmtsvc-dev-centralus, appcs-pmtsvc-qa-centralus, appcs-pmtsvc-rtpsend-prod-eastus
+managed identity: id-pmtsvc-dev-centralus, id-pmtsvc-qa-centralus,id-pmtsvc-prod-eastus
+
