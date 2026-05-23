@@ -4,3 +4,7 @@ resource groups: rg-pmtsvc-dev, rg-pmtsvc-qa, rg-pmtsvc-prod,
 app configuration: appcs-pmtsvc-dev-centralus, appcs-pmtsvc-qa-centralus, appcs-pmtsvc-rtpsend-prod-eastus
 managed identity: id-pmtsvc-dev-centralus, id-pmtsvc-qa-centralus,id-pmtsvc-prod-eastus
 
+app insights: appi-paymentservices-dev-centralus,appi-paymentservices-qa-centralus,appi-paymentservices-prod-eastus
+keyvauult: kv-pmtsvc-dev-centralus,kv-pmtsvc-qa-centralus,kv-pmtsvc-prod-eastus
+
+
