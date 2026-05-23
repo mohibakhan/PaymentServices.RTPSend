@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using PaymentServices.RTPSend.Constants;
 using PaymentServices.RTPSend.Models.Cosmos;
 using PaymentServices.RTPSend.Models.Domain;
@@ -10,7 +12,10 @@ public static class TabaPayRequestHelper
     {
         var request = new TabapayPaymentRequest
         {
-            ReferenceId = GenerateReferenceId(),
+            // Deterministic from evolveId so SB redeliveries don't generate
+            // new referenceIDs (which would let TabaPay process the same
+            // logical payment twice).
+            ReferenceId = DeriveReferenceId(evolve.EvolveId),
             Type = evolve.Type ?? PaymentRequestConstants.CreatePaymentTypePush,
             AchOptions = evolve.AchOptions ?? PaymentRequestConstants.CreatePaymentAchOptions,
             Amount = evolve.Amount,
@@ -52,12 +57,55 @@ public static class TabaPayRequestHelper
         return request;
     }
 
-    private static string GenerateReferenceId()
+    /// <summary>
+    /// Derives a deterministic 15-character referenceID from the evolveId.
+    /// Same evolveId always produces the same referenceID, so Service Bus
+    /// redeliveries (after a transient TabaPay failure) send the same
+    /// referenceID — TabaPay then sees the retry as a duplicate of the
+    /// original request rather than a new, independent transaction.
+    ///
+    /// Encoding: first 15 chars of base32(SHA-256(evolveId)).
+    ///   - 15 chars × 5 bits each = 75 bits of entropy
+    ///   - Collision probability at 3M txns/month: negligible
+    ///   - Base32 RFC 4648 char set (A-Z, 2-7) is alphanumeric-safe for TabaPay
+    /// </summary>
+    public static string DeriveReferenceId(string evolveId)
     {
-        const string allowed = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789";
-        var chars = new char[15];
-        for (var i = 0; i < 15; i++)
-            chars[i] = allowed[Random.Shared.Next(allowed.Length)];
-        return new string(chars);
+        ArgumentException.ThrowIfNullOrWhiteSpace(evolveId);
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(evolveId));
+        return Base32EncodeFirst15(hash);
+    }
+
+    private static string Base32EncodeFirst15(byte[] bytes)
+    {
+        // RFC 4648 base32 alphabet (no padding)
+        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+        // 15 base32 chars need 75 bits. Read 10 bytes (80 bits), emit 15 chars.
+        // We don't pad — slice exactly 15 chars off the front.
+        Span<char> result = stackalloc char[15];
+
+        int bitBuffer = 0;
+        int bitCount = 0;
+        int byteIndex = 0;
+        int outputIndex = 0;
+
+        while (outputIndex < 15)
+        {
+            // Refill bit buffer from next input byte
+            while (bitCount < 5 && byteIndex < bytes.Length)
+            {
+                bitBuffer = (bitBuffer << 8) | bytes[byteIndex++];
+                bitCount += 8;
+            }
+
+            // Extract top 5 bits
+            int alphabetIndex = (bitBuffer >> (bitCount - 5)) & 0x1F;
+            bitCount -= 5;
+            result[outputIndex++] = alphabet[alphabetIndex];
+        }
+
+        return new string(result);
     }
 }
