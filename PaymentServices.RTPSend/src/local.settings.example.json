@@ -24,8 +24,6 @@
     "rtpSend:AppSettings:TABAPAY_SEND_MERCHANT_ID": "<merchant id>",
 
     "rtpSend:AppSettings:SERVICE_BUS_CONNSTRING": "<service bus connection string>",
-    "rtpSend:AppSettings:SERVICE_BUS_TOPIC_NAME": "payment-processing",
-    "rtpSend:AppSettings:SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME": "rtpsend-process",
 
     "rtpSend:AppSettings:PARTNER_LEDGER_SQL_CONNSTRING": "<sql connection string>",
     "rtpSend:AppSettings:PARTNER_LEDGER_SPNAME": "<stored proc name>",

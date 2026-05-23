@@ -159,7 +159,7 @@ public class CreatePayment
                     PaymentReference = payment.PaymentReference,
                     EnqueuedAt = DateTimeOffset.UtcNow
                 },
-                _settings.SERVICE_BUS_TOPIC_NAME,
+                PaymentRequestConstants.ServiceBusTopicName,
                 subject: PaymentRequestConstants.CreatePaymentRequestSubject);
 
             // -------- Return 202 Accepted --------

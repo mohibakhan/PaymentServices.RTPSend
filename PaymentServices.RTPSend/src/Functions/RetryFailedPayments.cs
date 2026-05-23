@@ -3,10 +3,10 @@ using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PaymentServices.RTPSend.Constants;
 using PaymentServices.RTPSend.Interface.Adapters;
 using PaymentServices.RTPSend.Models;
 using PaymentServices.RTPSend.Services;
-using PaymentServices.RTPSend.Settings;
 using SharedAppSettings = PaymentServices.Shared.Models.AppSettings;
 
 namespace PaymentServices.RTPSend.Functions;
@@ -32,20 +32,17 @@ public class RetryFailedPayments
 
     private readonly IPaymentCosmosDBAdapter _paymentCosmosDB;
     private readonly IPaymentOrchestrator _orchestrator;
-    private readonly RtpSendSettings _settings;
     private readonly SharedAppSettings _sharedSettings;
     private readonly ILogger<RetryFailedPayments> _logger;
 
     public RetryFailedPayments(
         IPaymentCosmosDBAdapter paymentCosmosDB,
         IPaymentOrchestrator orchestrator,
-        IOptions<RtpSendSettings> settings,
         IOptions<SharedAppSettings> sharedSettings,
         ILogger<RetryFailedPayments> logger)
     {
         _paymentCosmosDB = paymentCosmosDB;
         _orchestrator = orchestrator;
-        _settings = settings.Value;
         _sharedSettings = sharedSettings.Value;
         _logger = logger;
     }
@@ -63,8 +60,8 @@ public class RetryFailedPayments
         // RTPSend's subscription dead-letter sub-queue on the shared topic.
         // Path is: {topic}/Subscriptions/{subscription}/$DeadLetterQueue
         await using var receiver = sbClient.CreateReceiver(
-            _settings.SERVICE_BUS_TOPIC_NAME,
-            _settings.SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME,
+            PaymentRequestConstants.ServiceBusTopicName,
+            PaymentRequestConstants.ServiceBusProcessSubscriptionName,
             new ServiceBusReceiverOptions
             {
                 ReceiveMode = ServiceBusReceiveMode.PeekLock,

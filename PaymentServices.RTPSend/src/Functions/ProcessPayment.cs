@@ -50,9 +50,9 @@ public class ProcessPayment
     [Function(nameof(ProcessPayment))]
     public async Task Run(
         [ServiceBusTrigger(
-            topicName: "%rtpSend:AppSettings:SERVICE_BUS_TOPIC_NAME%",
-            subscriptionName: "%rtpSend:AppSettings:SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME%",
-            Connection = "rtpSend:AppSettings:SERVICE_BUS_CONNSTRING")] ServiceBusReceivedMessage message,
+            topicName: "payment-processing",
+            subscriptionName: "rtpsend-process",
+            Connection = "SERVICE_BUS_CONNSTRING")] ServiceBusReceivedMessage message,
         CancellationToken cancellationToken)
     {
         var body = message.Body.ToString();

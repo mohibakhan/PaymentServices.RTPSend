@@ -8,6 +8,10 @@ public static class PaymentRequestConstants
     public const string TransactionCompleted = "Completed";
     public const string TransactionFailed = "Failed";
 
+    // Service Bus — platform-fixed names (do not vary by environment)
+    public const string ServiceBusTopicName = "payment-processing";
+    public const string ServiceBusProcessSubscriptionName = "rtpsend-process";
+
     // Service Bus subjects — discriminator on the published envelope
     public const string CreatePaymentRequestSubject = "CreatePaymentRequest";
     public const string SuccessServiceBusSubject = "CreatePayment - Success";

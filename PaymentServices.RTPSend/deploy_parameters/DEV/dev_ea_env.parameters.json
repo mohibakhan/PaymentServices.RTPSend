@@ -10,9 +10,6 @@
 
   "rtpSend:AppSettings:TABAPAY_SEND_URL": "https://apitest.getevolved.com/v1/Transactions/Card",
 
-  "rtpSend:AppSettings:SERVICE_BUS_TOPIC_NAME": "payment-processing",
-  "rtpSend:AppSettings:SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME": "rtpsend-process",
-
   "rtpSend:AppSettings:PARTNER_LEDGER_SPNAME": "[test].[vAccountFboLookup]",
   "rtpSend:AppSettings:RTP_SEND_TRAN_CODE": "21",
 

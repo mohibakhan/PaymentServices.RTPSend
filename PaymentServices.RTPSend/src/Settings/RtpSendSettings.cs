@@ -25,28 +25,19 @@ public class RtpSendSettings
     public string TABAPAY_SEND_MERCHANT_ID { get; set; } = string.Empty;
 
     // -------------------------------------------------------------------------
-    // Service Bus — channels
+    // Service Bus
     //
-    // SERVICE_BUS_TOPIC_NAME                — shared platform topic. Used for:
-    //                                          - Inbound: CreatePayment publishes
-    //                                            here with Subject = 'CreatePaymentRequest'
-    //                                            so the ProcessPayment subscription
-    //                                            picks it up.
-    //                                          - Outbound: ProcessPayment publishes
-    //                                            terminal outcomes (success/failure)
-    //                                            here with Subject = 'CreatePayment - Success'
-    //                                            or 'CreatePayment - Failure' for
-    //                                            downstream subscribers.
+    // The TOPIC and SUBSCRIPTION names are platform-fixed (payment-processing /
+    // rtpsend-process) and live as constants in PaymentRequestConstants — they
+    // don't vary across environments and aren't configurable.
     //
-    // SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME — RTPSend's subscription on the topic.
-    //                                          ProcessPayment triggers off this.
-    //                                          Its $DeadLetterQueue is drained by
-    //                                          RetryFailedPayments.
+    // The CONNECTION STRING for runtime publishers comes from the shared
+    // AppSettings (rtpSend:AppSettings:SERVICE_BUS_CONNSTRING).
     //
-    // The connection string lives in the shared AppSettings.
+    // The CONNECTION STRING for the ProcessPayment trigger binding must be set
+    // as a flat Function App setting named SERVICE_BUS_CONNSTRING — isolated
+    // worker can't resolve binding connections from App Configuration.
     // -------------------------------------------------------------------------
-    public string SERVICE_BUS_TOPIC_NAME { get; set; } = string.Empty;
-    public string SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME { get; set; } = string.Empty;
 
     // -------------------------------------------------------------------------
     // SQL — Partner ledger stored procedure
