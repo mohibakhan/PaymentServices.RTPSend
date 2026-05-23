@@ -1,0 +1,113 @@
+using FluentValidation;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using PaymentServices.RTPSend.Helpers;
+using PaymentServices.RTPSend.Interface;
+using PaymentServices.RTPSend.Interface.Adapters;
+using PaymentServices.RTPSend.Interface.External;
+using PaymentServices.RTPSend.Interface.Services;
+using PaymentServices.RTPSend.Providers;
+using PaymentServices.RTPSend.Repositories;
+using PaymentServices.RTPSend.Repositories.Adapters;
+using PaymentServices.RTPSend.Services;
+using PaymentServices.RTPSend.Settings;
+using PaymentServices.RTPSend.Validators;
+using PaymentServices.Shared.Extensions;
+
+namespace PaymentServices.RTPSend.Extensions;
+
+/// <summary>
+/// Registers everything the RTPSend Function App needs.
+/// Layout mirrors PaymentServices.Gateway.
+/// </summary>
+public static class ServiceCollectionExtensions
+{
+    private const string Prefix = "rtpSend:AppSettings";
+
+    public static IServiceCollection AddRtpSendInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // ---------------------------------------------------------------
+        // Shared platform infra (PaymentServices.Shared)
+        // ---------------------------------------------------------------
+        services.AddPaymentAppSettings(configuration, Prefix);
+        services.AddPaymentCosmosClient(configuration, Prefix);
+        services.AddPaymentServiceBusPublisher(configuration, Prefix);
+
+        // ---------------------------------------------------------------
+        // RTPSend-specific settings
+        // ---------------------------------------------------------------
+        services.Configure<RtpSendSettings>(configuration.GetSection(Prefix));
+
+        // ---------------------------------------------------------------
+        // Cosmos containers — keyed per-container
+        // ---------------------------------------------------------------
+        var rtpSendSection = configuration.GetSection(Prefix);
+        var paymentsContainer = rtpSendSection["COSMOS_PAYMENT_CONTAINER"]
+            ?? throw new InvalidOperationException($"{Prefix}:COSMOS_PAYMENT_CONTAINER is required");
+        var partnerLedgerContainer = rtpSendSection["COSMOS_PARTNER_LEDGER_CONTAINER"]
+            ?? throw new InvalidOperationException($"{Prefix}:COSMOS_PARTNER_LEDGER_CONTAINER is required");
+        var apiUserConfigContainer = rtpSendSection["COSMOS_API_CONFIG_CONTAINER"]
+            ?? throw new InvalidOperationException($"{Prefix}:COSMOS_API_CONFIG_CONTAINER is required");
+        var idempotencyContainer = rtpSendSection["COSMOS_IDEMPOTENCY_CONTAINER"]
+            ?? throw new InvalidOperationException($"{Prefix}:COSMOS_IDEMPOTENCY_CONTAINER is required");
+
+        services.AddCosmosContainer(configuration, paymentsContainer,      serviceKey: "payments",            prefix: Prefix);
+        services.AddCosmosContainer(configuration, partnerLedgerContainer, serviceKey: "partnerLedger",       prefix: Prefix);
+        services.AddCosmosContainer(configuration, apiUserConfigContainer, serviceKey: "apiUserConfig",       prefix: Prefix);
+        services.AddCosmosContainer(configuration, idempotencyContainer,   serviceKey: "paymentIdempotency",  prefix: Prefix);
+
+        // ---------------------------------------------------------------
+        // Adapters / repositories
+        // ---------------------------------------------------------------
+        services.AddScoped<IPaymentCosmosDBAdapter, PaymentCosmosDBAdapter>();
+        services.AddScoped<IPartnerLedgerCosmosDBAdapter, PartnerLedgerCosmosDBAdapter>();
+        services.AddScoped<IApiUserConfigCosmosAdapter, ApiUserConfigAdapter>();
+        services.AddScoped<IPaymentIdempotencyAdapter, PaymentIdempotencyAdapter>();
+        services.AddSingleton<IServiceBusAdapter, ServiceBusAdapter>();
+
+        // ---------------------------------------------------------------
+        // Helpers
+        // ---------------------------------------------------------------
+        services.AddScoped<IEvolvePaymentRequestHelper, EvolvePaymentRequestHelper>();
+        services.AddScoped<IProblemHelper, ProblemHelper>();
+
+        // ---------------------------------------------------------------
+        // HTTP + HttpContext
+        // ---------------------------------------------------------------
+        services.AddHttpClient();
+        services.AddHttpContextAccessor();
+
+        // ---------------------------------------------------------------
+        // External services — PLACEHOLDERS.
+        //
+        // When the real LimitService / LedgerService NuGet packages land,
+        // remove the NoOp registrations below and call their official
+        // AddXxx() extension methods instead.
+        // ---------------------------------------------------------------
+        services.AddScoped<ILimitService, NoOpLimitService>();
+        services.AddScoped<ILedgerService, NoOpLedgerService>();
+
+        // ---------------------------------------------------------------
+        // Core business services
+        // ---------------------------------------------------------------
+        services.AddScoped<PartnerLedgerSystem>();
+        services.AddScoped<ITabaPaySendService, TabaPaySendService>();
+        services.AddScoped<IServiceBusMessageService, ServiceBusMessageService>();
+        services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+
+        // ---------------------------------------------------------------
+        // Validation
+        // ---------------------------------------------------------------
+        services.AddValidatorsFromAssemblyContaining<BasicPaymentRequestValidator>();
+
+        // ---------------------------------------------------------------
+        // Health checks
+        // ---------------------------------------------------------------
+        services.AddHealthChecks();
+        services.AddSingleton<IHealthCheckServiceProvider, HealthCheckServiceProvider>();
+
+        return services;
+    }
+}

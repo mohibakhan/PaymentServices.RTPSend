@@ -1,0 +1,37 @@
+# =============================================================================
+# PaymentServices.RTPSend — Azure DevOps Build Pipeline - CI
+# =============================================================================
+name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  - develop
+  - release
+  - master
+
+parameters:
+  - name: FunctionAppName
+    displayName: FunctionAppName
+    type: string
+    default: PaymentServices.RTPSend
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+      - Release
+      - Debug
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: "Payments Common Services/Evolve.Digital.DevOps"
+      ref: refs/heads/develop
+
+extends:
+  template: Service_Pipelines/function_app_template.yml@templates
+  parameters:
+    FunctionAppName: PaymentServices.RTPSend
+    ProjectPath: src
+    DeployParametersPath: deploy_parameters
+    buildConfiguration: ${{ parameters.buildConfiguration }}

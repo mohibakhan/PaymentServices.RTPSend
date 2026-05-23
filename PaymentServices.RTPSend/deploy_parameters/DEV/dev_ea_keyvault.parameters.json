@@ -1,0 +1,20 @@
+{
+  "rtpSend:AppSettings:COSMOS_CONNSTRING": {
+    "uri": "https://kv-pmtsvc-dev-eastus.vault.azure.net/secrets/COSMOS-PAYMENT-CONNSTRING"
+  },
+  "rtpSend:AppSettings:SERVICE_BUS_CONNSTRING": {
+    "uri": "https://kv-pmtsvc-dev-eastus.vault.azure.net/secrets/SERVICE-BUS-CONNSTRING"
+  },
+  "rtpSend:AppSettings:TABAPAY_SEND_APIKEY": {
+    "uri": "https://kv-pmtsvc-dev-eastus.vault.azure.net/secrets/TABAPAY-SEND-APIKEY"
+  },
+  "rtpSend:AppSettings:TABAPAY_SEND_CLIENT_ID": {
+    "uri": "https://kv-pmtsvc-dev-eastus.vault.azure.net/secrets/TABAPAY-SEND-CLIENT-ID"
+  },
+  "rtpSend:AppSettings:TABAPAY_SEND_MERCHANT_ID": {
+    "uri": "https://kv-pmtsvc-dev-eastus.vault.azure.net/secrets/TABAPAY-SEND-MERCHANT-ID"
+  },
+  "rtpSend:AppSettings:PARTNER_LEDGER_SQL_CONNSTRING": {
+    "uri": "https://kv-pmtsvc-dev-eastus.vault.azure.net/secrets/PARTNER-LEDGER-SQL-CONNSTRING"
+  }
+}

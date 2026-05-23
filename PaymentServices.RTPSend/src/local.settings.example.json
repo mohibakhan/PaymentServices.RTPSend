@@ -1,0 +1,39 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "ASPNETCORE_ENVIRONMENT": "Development",
+
+    "//AZURE_CLIENT_ID": "<managed identity client id (omit for local DefaultAzureCredential)>",
+    "//APP_CONFIG_ENDPOINT": "https://<your-app-config>.azconfig.io",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "<App Insights connection string>",
+
+    "rtpSend:AppSettings:COSMOS_ENDPOINT": "<https://*.documents.azure.com:443/>",
+    "rtpSend:AppSettings:COSMOS_CONNSTRING": "<connection string (omit if using MI)>",
+    "rtpSend:AppSettings:COSMOS_DATABASE": "payments",
+    "rtpSend:AppSettings:COSMOS_PAYMENT_CONTAINER": "paymentRequests",
+    "rtpSend:AppSettings:COSMOS_PARTNER_LEDGER_CONTAINER": "fboAccounts",
+    "rtpSend:AppSettings:COSMOS_API_CONFIG_CONTAINER": "apiUserConfig",
+    "rtpSend:AppSettings:COSMOS_IDEMPOTENCY_CONTAINER": "paymentIdempotency",
+
+    "rtpSend:AppSettings:TABAPAY_SEND_URL": "<https://api.tabapay.net/...>",
+    "rtpSend:AppSettings:TABAPAY_SEND_APIKEY": "<apim subscription key>",
+    "rtpSend:AppSettings:TABAPAY_SEND_CLIENT_ID": "<client id>",
+    "rtpSend:AppSettings:TABAPAY_SEND_MERCHANT_ID": "<merchant id>",
+
+    "rtpSend:AppSettings:SERVICE_BUS_CONNSTRING": "<service bus connection string>",
+    "rtpSend:AppSettings:SERVICE_BUS_PROCESS_QUEUE_NAME": "payments-to-process",
+    "rtpSend:AppSettings:SERVICE_BUS_TOPIC_NAME": "payment-outcomes",
+
+    "rtpSend:AppSettings:PARTNER_LEDGER_SQL_CONNSTRING": "<sql connection string>",
+    "rtpSend:AppSettings:PARTNER_LEDGER_SPNAME": "<stored proc name>",
+
+    "rtpSend:AppSettings:RTP_SEND_TRAN_CODE": "<tran code>",
+    "rtpSend:AppSettings:RETRY_TIMER_SCHEDULE": "0 */5 * * * *",
+
+    "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TRAIN": "Digital",
+    "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TEAM": "Services"
+  }
+}
