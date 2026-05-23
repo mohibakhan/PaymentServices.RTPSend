@@ -24,6 +24,10 @@ public class RtpSendSettings
     public string TABAPAY_SEND_CLIENT_ID { get; set; } = string.Empty;
     public string TABAPAY_SEND_MERCHANT_ID { get; set; } = string.Empty;
 
+    // Settlement account at TabaPay used as the funding source for RTP push.
+    // 22-character TabaPay account ID. Distinct per environment.
+    public string TABAPAY_SOURCE_ACCOUNT_ID { get; set; } = string.Empty;
+
     // -------------------------------------------------------------------------
     // Service Bus
     //

@@ -26,6 +26,7 @@
     "rtpSend:AppSettings:TABAPAY_SEND_APIKEY": "<apim subscription key>",
     "rtpSend:AppSettings:TABAPAY_SEND_CLIENT_ID": "<client id>",
     "rtpSend:AppSettings:TABAPAY_SEND_MERCHANT_ID": "<merchant id>",
+    "rtpSend:AppSettings:TABAPAY_SOURCE_ACCOUNT_ID": "<22-char settlement account id>",
 
     "rtpSend:AppSettings:SERVICE_BUS_CONNSTRING": "<service bus connection string>",
 

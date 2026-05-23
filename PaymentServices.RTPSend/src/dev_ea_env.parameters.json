@@ -9,6 +9,7 @@
   "rtpSend:AppSettings:COSMOS_IDEMPOTENCY_CONTAINER": "paymentIdempotency",
 
   "rtpSend:AppSettings:TABAPAY_SEND_URL": "https://apitest.getevolved.com/v1/Transactions/Card",
+  "rtpSend:AppSettings:TABAPAY_SOURCE_ACCOUNT_ID": "yuEAY8eEwGafmufciZBrEQ",
 
   "rtpSend:AppSettings:PARTNER_LEDGER_SPNAME": "[test].[vAccountFboLookup]",
   "rtpSend:AppSettings:RTP_SEND_TRAN_CODE": "21"
