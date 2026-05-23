@@ -1,8 +1,2 @@
-git rm -r --cached bin obj .vs .vscode .idea
-git rm --cached local.settings.json
-git rm --cached src/bin -r
-git rm --cached src/obj -r
-git rm --cached src/local.settings.json
-
-git rm -r --cached .
-git add .
+var options = new QueryRequestOptions { PartitionKey = new PartitionKey(accountNumber) }; 
+using var iterator = _container.GetItemQueryIterator<PartnerLedgerResponse>(query, requestOptions: options);
