@@ -1,70 +1,8 @@
-@echo off
-setlocal
-
-rem ============================================================
-rem  1. Create the root and cd into it
-rem ============================================================
-cd /d C:\path\to\your\repos
-mkdir PaymentServices.RTPSend
-cd PaymentServices.RTPSend
-
-rem ============================================================
-rem  2. Create the folder skeleton
-rem ============================================================
-mkdir deploy_parameters\DEV
-mkdir pipelines
-
-rem ============================================================
-rem  3. Create the Functions project under src/
-rem ============================================================
-dotnet new worker --name PaymentServices.RTPSend --output src --framework net10.0 --force
-
-rem ============================================================
-rem  4. Wipe the default Worker scaffold files — we replace them
-rem ============================================================
-del src\Program.cs
-del src\Worker.cs 2>nul
-del src\appsettings.json 2>nul
-del src\appsettings.Development.json 2>nul
-
-rem ============================================================
-rem  5. Create src subfolders for the real layout
-rem ============================================================
-cd src
-mkdir Properties
-mkdir Constants
-mkdir Exceptions\Core
-mkdir Extensions
-mkdir Functions
-mkdir Helpers\ISO3166
-mkdir Interface\Adapters
-mkdir Interface\External
-mkdir Interface\Services
-mkdir Models\Cosmos
-mkdir Models\Domain
-mkdir Models\Request
-mkdir Models\Response
-mkdir Providers
-mkdir Repositories\Adapters
-mkdir Services
-mkdir Settings
-mkdir Validators
-cd ..
-
-rem ============================================================
-rem  6. Create the .slnx solution and add the project
-rem ============================================================
-dotnet new sln --name PaymentServices.RTPSend --format slnx
-dotnet sln PaymentServices.RTPSend.slnx add src\PaymentServices.RTPSend.csproj
-
-rem ============================================================
-rem  7. Git init
-rem ============================================================
-git init
-echo bin/>>.gitignore
-echo obj/>>.gitignore
-echo local.settings.json>>.gitignore
-
-echo.
-echo Done. Now overwrite src\PaymentServices.RTPSend.csproj with your tuned version.
-endlocal
+<!-- Azure Functions -->
+<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.0" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.22.0" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.OpenApi" Version="1.5.1" />
