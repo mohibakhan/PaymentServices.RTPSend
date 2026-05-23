@@ -34,8 +34,15 @@ public sealed class PartnerLedgerCosmosDBAdapter : IPartnerLedgerCosmosDBAdapter
             var query = new QueryDefinition("SELECT * FROM c WHERE c.vAccountNumber = @accountNumber")
                 .WithParameter("@accountNumber", accountNumber);
 
+            // Partition key is /vAccountNumber — pass it explicitly so Cosmos
+            // does a single-partition lookup instead of fanning out across partitions.
+            var requestOptions = new QueryRequestOptions
+            {
+                PartitionKey = new PartitionKey(accountNumber)
+            };
+
             var results = new List<PartnerLedgerResponse>();
-            using var iterator = _container.GetItemQueryIterator<PartnerLedgerResponse>(query);
+            using var iterator = _container.GetItemQueryIterator<PartnerLedgerResponse>(query, requestOptions: requestOptions);
             while (iterator.HasMoreResults)
             {
                 var page = await iterator.ReadNextAsync();
@@ -67,7 +74,7 @@ public sealed class PartnerLedgerCosmosDBAdapter : IPartnerLedgerCosmosDBAdapter
 
         try
         {
-            return await _repository.CreateAsync(request, request.Id);
+            return await _repository.CreateAsync(request, request.VAccountNumber);
         }
         catch (CosmosException ce) when (ce.StatusCode == System.Net.HttpStatusCode.Conflict)
         {

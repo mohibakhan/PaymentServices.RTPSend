@@ -10,8 +10,10 @@ namespace PaymentServices.RTPSend.Functions;
 
 /// <summary>
 /// Service Bus-triggered worker. Consumes <see cref="PaymentQueueMessage"/>
-/// instances from <c>SERVICE_BUS_PROCESS_QUEUE_NAME</c>, fetches the persisted
-/// Cosmos document, and runs the full orchestrator pipeline.
+/// instances from RTPSend's subscription on the shared <c>payment-processing</c>
+/// topic. The subscription filter (set up in bicep) matches only messages
+/// with Subject = "CreatePaymentRequest" so outcome envelopes for other
+/// services are ignored.
 ///
 /// Behavior on failure: any exception bubbles up, SB increments the message's
 /// delivery count, and after MaxDeliveryCount the message is automatically
@@ -42,7 +44,8 @@ public class ProcessPayment
     [Function(nameof(ProcessPayment))]
     public async Task Run(
         [ServiceBusTrigger(
-            queueName: "%rtpSend:AppSettings:SERVICE_BUS_PROCESS_QUEUE_NAME%",
+            topicName: "%rtpSend:AppSettings:SERVICE_BUS_TOPIC_NAME%",
+            subscriptionName: "%rtpSend:AppSettings:SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME%",
             Connection = "rtpSend:AppSettings:SERVICE_BUS_CONNSTRING")] ServiceBusReceivedMessage message,
         CancellationToken cancellationToken)
     {

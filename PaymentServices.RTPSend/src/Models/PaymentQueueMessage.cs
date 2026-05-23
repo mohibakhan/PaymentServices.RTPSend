@@ -3,10 +3,12 @@ using System.Text.Json.Serialization;
 namespace PaymentServices.RTPSend.Models;
 
 /// <summary>
-/// Lightweight envelope published to <c>SERVICE_BUS_PROCESS_QUEUE_NAME</c> by
-/// CreatePayment. The persisted Cosmos document is the source of truth —
-/// ProcessPayment re-reads it by <see cref="EvolveId"/> rather than trusting
-/// the message body.
+/// Lightweight envelope published by CreatePayment to the shared
+/// <c>payment-processing</c> topic with Subject = "CreatePaymentRequest".
+/// RTPSend's <c>rtpsend-process</c> subscription on that topic filters for
+/// this subject and triggers ProcessPayment. The persisted Cosmos document
+/// is the source of truth — ProcessPayment re-reads it by <see cref="EvolveId"/>
+/// rather than trusting the message body.
 /// </summary>
 public sealed class PaymentQueueMessage
 {

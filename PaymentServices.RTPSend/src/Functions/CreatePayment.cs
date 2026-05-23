@@ -151,7 +151,7 @@ public class CreatePayment
                 return BuildProblemResponse(req.HttpContext, new ConflictProblem());
             }
 
-            // -------- Publish to processing queue --------
+            // -------- Publish to processing subscription via shared topic --------
             await _serviceBus.SendToQueueAsync(
                 new PaymentQueueMessage
                 {
@@ -159,7 +159,8 @@ public class CreatePayment
                     PaymentReference = payment.PaymentReference,
                     EnqueuedAt = DateTimeOffset.UtcNow
                 },
-                _settings.SERVICE_BUS_PROCESS_QUEUE_NAME);
+                _settings.SERVICE_BUS_TOPIC_NAME,
+                subject: PaymentRequestConstants.CreatePaymentRequestSubject);
 
             // -------- Return 202 Accepted --------
             var response = new CreatePaymentResponse

@@ -27,19 +27,26 @@ public class RtpSendSettings
     // -------------------------------------------------------------------------
     // Service Bus — channels
     //
-    // SERVICE_BUS_PROCESS_QUEUE_NAME — queue published to by CreatePayment,
-    //                                  consumed by ProcessPayment trigger.
-    //                                  Its $DeadLetterQueue is drained by
-    //                                  RetryFailedPayments.
+    // SERVICE_BUS_TOPIC_NAME                — shared platform topic. Used for:
+    //                                          - Inbound: CreatePayment publishes
+    //                                            here with Subject = 'CreatePaymentRequest'
+    //                                            so the ProcessPayment subscription
+    //                                            picks it up.
+    //                                          - Outbound: ProcessPayment publishes
+    //                                            terminal outcomes (success/failure)
+    //                                            here with Subject = 'CreatePayment - Success'
+    //                                            or 'CreatePayment - Failure' for
+    //                                            downstream subscribers.
     //
-    // SERVICE_BUS_TOPIC_NAME         — terminal outcomes (success/failure)
-    //                                  published by ProcessPayment for any
-    //                                  downstream subscribers.
+    // SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME — RTPSend's subscription on the topic.
+    //                                          ProcessPayment triggers off this.
+    //                                          Its $DeadLetterQueue is drained by
+    //                                          RetryFailedPayments.
     //
     // The connection string lives in the shared AppSettings.
     // -------------------------------------------------------------------------
-    public string SERVICE_BUS_PROCESS_QUEUE_NAME { get; set; } = string.Empty;
     public string SERVICE_BUS_TOPIC_NAME { get; set; } = string.Empty;
+    public string SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME { get; set; } = string.Empty;
 
     // -------------------------------------------------------------------------
     // SQL — Partner ledger stored procedure

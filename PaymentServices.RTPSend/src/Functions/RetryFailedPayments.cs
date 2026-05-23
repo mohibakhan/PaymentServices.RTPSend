@@ -12,8 +12,8 @@ using SharedAppSettings = PaymentServices.Shared.Models.AppSettings;
 namespace PaymentServices.RTPSend.Functions;
 
 /// <summary>
-/// Timer-triggered DLQ drain for the <c>payments-to-process</c> queue.
-/// For each dead-lettered message:
+/// Timer-triggered DLQ drain for RTPSend's subscription on the shared
+/// <c>payment-processing</c> topic. For each dead-lettered message:
 ///   1. Read the envelope to get the evolveId
 ///   2. Fetch the persisted Cosmos document
 ///   3. Hand to <see cref="IPaymentOrchestrator.ResumeFromAsync"/>, which
@@ -59,11 +59,17 @@ public class RetryFailedPayments
             DateTime.UtcNow, timerInfo.ScheduleStatus?.Next);
 
         await using var sbClient = new ServiceBusClient(_sharedSettings.SERVICE_BUS_CONNSTRING);
-        var deadLetterPath = $"{_settings.SERVICE_BUS_PROCESS_QUEUE_NAME}/$DeadLetterQueue";
-        await using var receiver = sbClient.CreateReceiver(deadLetterPath, new ServiceBusReceiverOptions
-        {
-            ReceiveMode = ServiceBusReceiveMode.PeekLock
-        });
+
+        // RTPSend's subscription dead-letter sub-queue on the shared topic.
+        // Path is: {topic}/Subscriptions/{subscription}/$DeadLetterQueue
+        await using var receiver = sbClient.CreateReceiver(
+            _settings.SERVICE_BUS_TOPIC_NAME,
+            _settings.SERVICE_BUS_PROCESS_SUBSCRIPTION_NAME,
+            new ServiceBusReceiverOptions
+            {
+                ReceiveMode = ServiceBusReceiveMode.PeekLock,
+                SubQueue = SubQueue.DeadLetter
+            });
 
         const int maxMessages = 32;
         var batch = await receiver.ReceiveMessagesAsync(maxMessages, TimeSpan.FromSeconds(10), cancellationToken);

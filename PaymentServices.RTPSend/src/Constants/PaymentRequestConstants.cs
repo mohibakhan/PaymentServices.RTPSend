@@ -9,6 +9,7 @@ public static class PaymentRequestConstants
     public const string TransactionFailed = "Failed";
 
     // Service Bus subjects — discriminator on the published envelope
+    public const string CreatePaymentRequestSubject = "CreatePaymentRequest";
     public const string SuccessServiceBusSubject = "CreatePayment - Success";
     public const string FailureServiceBusSubject = "CreatePayment - Failure";
 
