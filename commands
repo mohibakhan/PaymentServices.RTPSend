@@ -1,48 +1,70 @@
-cd C:\path\to\your\repos
+@echo off
+setlocal
+
+rem ============================================================
+rem  1. Create the root and cd into it
+rem ============================================================
+cd /d C:\path\to\your\repos
 mkdir PaymentServices.RTPSend
 cd PaymentServices.RTPSend
 
-rem -- top-level
-type nul > .gitignore
-type nul > .gitattributes
-type nul > PaymentServices.RTPSend.slnx
-
-rem -- deploy_parameters
+rem ============================================================
+rem  2. Create the folder skeleton
+rem ============================================================
 mkdir deploy_parameters\DEV
-type nul > deploy_parameters\DEV\dev_ea_env.parameters.json
-type nul > deploy_parameters\DEV\dev_ea_keyvault.parameters.json
-
-rem -- pipelines
 mkdir pipelines
-type nul > pipelines\PaymentServices.RTPSend.yml
 
-rem -- src root
-mkdir src\Properties
-type nul > src\PaymentServices.RTPSend.csproj
-type nul > src\Program.cs
-type nul > src\host.json
-type nul > src\local.settings.example.json
-type nul > src\Properties\launchSettings.json
-type nul > src\Properties\serviceDependencies.json
-type nul > src\Properties\serviceDependencies.local.json
+rem ============================================================
+rem  3. Create the Functions project under src/
+rem ============================================================
+dotnet new worker --name PaymentServices.RTPSend --output src --framework net10.0 --force
 
-rem -- src subfolders
-mkdir src\Constants
-mkdir src\Exceptions\Core
-mkdir src\Extensions
-mkdir src\Functions
-mkdir src\Helpers\ISO3166
-mkdir src\Interface\Adapters
-mkdir src\Interface\External
-mkdir src\Interface\Services
-mkdir src\Models\Cosmos
-mkdir src\Models\Domain
-mkdir src\Models\Request
-mkdir src\Models\Response
-mkdir src\Providers
-mkdir src\Repositories\Adapters
-mkdir src\Services
-mkdir src\Settings
-mkdir src\Validators
+rem ============================================================
+rem  4. Wipe the default Worker scaffold files — we replace them
+rem ============================================================
+del src\Program.cs
+del src\Worker.cs 2>nul
+del src\appsettings.json 2>nul
+del src\appsettings.Development.json 2>nul
 
+rem ============================================================
+rem  5. Create src subfolders for the real layout
+rem ============================================================
+cd src
+mkdir Properties
+mkdir Constants
+mkdir Exceptions\Core
+mkdir Extensions
+mkdir Functions
+mkdir Helpers\ISO3166
+mkdir Interface\Adapters
+mkdir Interface\External
+mkdir Interface\Services
+mkdir Models\Cosmos
+mkdir Models\Domain
+mkdir Models\Request
+mkdir Models\Response
+mkdir Providers
+mkdir Repositories\Adapters
+mkdir Services
+mkdir Settings
+mkdir Validators
+cd ..
+
+rem ============================================================
+rem  6. Create the .slnx solution and add the project
+rem ============================================================
+dotnet new sln --name PaymentServices.RTPSend --format slnx
+dotnet sln PaymentServices.RTPSend.slnx add src\PaymentServices.RTPSend.csproj
+
+rem ============================================================
+rem  7. Git init
+rem ============================================================
 git init
+echo bin/>>.gitignore
+echo obj/>>.gitignore
+echo local.settings.json>>.gitignore
+
+echo.
+echo Done. Now overwrite src\PaymentServices.RTPSend.csproj with your tuned version.
+endlocal
