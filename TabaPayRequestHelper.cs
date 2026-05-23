@@ -27,7 +27,7 @@ public static class TabaPayRequestHelper
                 Name = evolve.SourceAccount.Name,
                 Address = (TabapayAddress?)evolve.SourceAccount.Address,
                 AccountNumber = evolve.SourceAccount.AccountNumber,
-                SourceOfFunds = "Credit Account"
+                SourceOfFunds = MapSourceOfFunds(evolve.SourceAccount.AccountType)
             },
             Accounts = new Accounts
             {
@@ -61,6 +61,23 @@ public static class TabaPayRequestHelper
 
         return request;
     }
+
+    /// <summary>
+    /// Maps a bank account type code (single char: S/C/A/B/L) to TabaPay's
+    /// sourceOfFunds descriptor. Used in the Corresponding block of an RTP
+    /// push request. Falls back to "Credit Account" for unknown / empty
+    /// values to preserve historic behavior.
+    /// </summary>
+    private static string MapSourceOfFunds(string? accountType) =>
+        accountType?.ToUpperInvariant() switch
+        {
+            "S" => "Savings Account",          // Savings
+            "C" => "Checking Account",         // Checking
+            "A" => "Savings Account",          // Business Savings
+            "B" => "Checking Account",         // Business Checking
+            "L" => "Credit Account",           // Loan
+            _   => "Credit Account"            // default / unknown
+        };
 
     /// <summary>
     /// Derives a deterministic 15-character referenceID from the evolveId.
