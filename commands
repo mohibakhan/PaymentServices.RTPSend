@@ -1,2 +1,24 @@
-var options = new QueryRequestOptions { PartitionKey = new PartitionKey(accountNumber) }; 
-using var iterator = _container.GetItemQueryIterator<PartnerLedgerResponse>(query, requestOptions: options);
+public async Task<PartnerLedgerResponse> GetItemAsync(string accountNumber)
+{
+    try
+    {
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.vAccountNumber = @accountNumber")
+            .WithParameter("@accountNumber", accountNumber);
+
+        var results = new List<PartnerLedgerResponse>();
+        var options = new QueryRequestOptions { PartitionKey = new PartitionKey(accountNumber) };
+        using var iterator = _container.GetItemQueryIterator<PartnerLedgerResponse>(query, requestOptions: options);
+        while (iterator.HasMoreResults)
+        {
+            var page = await iterator.ReadNextAsync();
+            results.AddRange(page);
+        }
+
+        var response = results.FirstOrDefault();
+        return response ?? new PartnerLedgerResponse { ErrorMessage = "Invalid V Account " };
+    }
+    catch (Exception ex)
+    {
+        throw new CosmosGetException(ex.Message);
+    }
+}
