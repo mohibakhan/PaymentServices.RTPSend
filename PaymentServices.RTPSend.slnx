@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/PaymentServices.RTPSend.csproj" />
+  <Project Path="tests/PaymentServices.RTPSend.UnitTests/PaymentServices.RTPSend.UnitTests.csproj" />
+</Solution>
