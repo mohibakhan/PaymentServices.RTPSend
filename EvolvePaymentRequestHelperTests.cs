@@ -21,7 +21,7 @@ public class EvolvePaymentRequestHelperTests
             FboAccountName = "FBO Test",
             CifNo = "cif-1",
             TaxId = "tax-1",
-            IsBusinessUser = true
+            UserIsBusiness = "1"
         };
 
         var ops = EvolvePaymentRequestHelper.SetAccountLookupPatchoperation(response);
@@ -40,7 +40,7 @@ public class EvolvePaymentRequestHelperTests
             FboAccountName = "FBO Test",
             CifNo = "cif-1",
             TaxId = "tax-1",
-            IsBusinessUser = true
+            UserIsBusiness = "1"
         };
 
         var ops = EvolvePaymentRequestHelper.SetAccountLookupPatchoperation(response);
