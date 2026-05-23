@@ -1,10 +1,36 @@
-cosmos: cosmos-paymentservices-dev-centralus, cosmos-paymentservices-qa-centralus, cosmosdb-pmtsvc-prod-eastus
-service bus namespace: sb-pmtsvc-dev-centralus, sb-pmtsvc-qa-centralus, sb-pmtsvc-prod-eastus
-resource groups: rg-pmtsvc-dev, rg-pmtsvc-qa, rg-pmtsvc-prod,
-app configuration: appcs-pmtsvc-dev-centralus, appcs-pmtsvc-qa-centralus, appcs-pmtsvc-rtpsend-prod-eastus
-managed identity: id-pmtsvc-dev-centralus, id-pmtsvc-qa-centralus,id-pmtsvc-prod-eastus
+# 1. Create folder structure
+New-Item -ItemType Directory -Force -Path `
+  "tests\PaymentServices.RTPSend.UnitTests", `
+  "tests\PaymentServices.RTPSend.UnitTests\TestHelpers", `
+  "tests\PaymentServices.RTPSend.UnitTests\Validators", `
+  "tests\PaymentServices.RTPSend.UnitTests\Helpers", `
+  "tests\PaymentServices.RTPSend.UnitTests\Services", `
+  "tests\PaymentServices.RTPSend.UnitTests\Repositories" | Out-Null
 
-app insights: appi-paymentservices-dev-centralus,appi-paymentservices-qa-centralus,appi-paymentservices-prod-eastus
-keyvauult: kv-pmtsvc-dev-centralus,kv-pmtsvc-qa-centralus,kv-pmtsvc-prod-eastus
+# 2. Create the test project
+dotnet new xunit `
+  --name PaymentServices.RTPSend.UnitTests `
+  --output tests\PaymentServices.RTPSend.UnitTests `
+  --framework net10.0 `
+  --force
 
+# 3. Remove the placeholder UnitTest1.cs that `dotnet new xunit` creates
+Remove-Item tests\PaymentServices.RTPSend.UnitTests\UnitTest1.cs -ErrorAction SilentlyContinue
 
+# 4. Reference the main project from the test project
+dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
+  reference src\PaymentServices.RTPSend.csproj
+
+# 5. Add NuGet packages: Moq + FluentAssertions + FluentValidation (TestHelper ships with it)
+dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
+  package Moq --version 4.20.72
+
+dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
+  package FluentAssertions --version 6.12.1
+
+dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
+  package FluentValidation --version 11.10.0
+
+# 6. Add the test project to the solution
+dotnet sln PaymentServices.RTPSend.slnx add `
+  tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj
