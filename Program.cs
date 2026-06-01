@@ -1,7 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 using Azure.Identity;
 using FluentValidation;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,6 +20,7 @@ using PaymentServices.RTPSend.Validators;
 using PaymentServices.Shared.Extensions;
 using Serilog;
 using Serilog.Events;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PaymentServices.RTPSend;
 
@@ -76,7 +77,7 @@ public static class Program
                 // remove the NoOp registrations below and call their official
                 // AddXxx() extension methods instead.
                 services.AddScoped<ILimitService, NoOpLimitService>();
-                services.AddScoped<ILedgerService, NoOpLedgerService>();
+                services.AddScoped<ILedgerService, EvolveLedgerService>();
 
                 // Core business services
                 services.AddScoped<IPartnerLedgerSystem, PartnerLedgerSystem>();
