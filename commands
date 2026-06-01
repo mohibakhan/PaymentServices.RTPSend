@@ -1,36 +1,3 @@
-# 1. Create folder structure
-New-Item -ItemType Directory -Force -Path `
-  "tests\PaymentServices.RTPSend.UnitTests", `
-  "tests\PaymentServices.RTPSend.UnitTests\TestHelpers", `
-  "tests\PaymentServices.RTPSend.UnitTests\Validators", `
-  "tests\PaymentServices.RTPSend.UnitTests\Helpers", `
-  "tests\PaymentServices.RTPSend.UnitTests\Services", `
-  "tests\PaymentServices.RTPSend.UnitTests\Repositories" | Out-Null
-
-# 2. Create the test project
-dotnet new xunit `
-  --name PaymentServices.RTPSend.UnitTests `
-  --output tests\PaymentServices.RTPSend.UnitTests `
-  --framework net10.0 `
-  --force
-
-# 3. Remove the placeholder UnitTest1.cs that `dotnet new xunit` creates
-Remove-Item tests\PaymentServices.RTPSend.UnitTests\UnitTest1.cs -ErrorAction SilentlyContinue
-
-# 4. Reference the main project from the test project
-dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
-  reference src\PaymentServices.RTPSend.csproj
-
-# 5. Add NuGet packages: Moq + FluentAssertions + FluentValidation (TestHelper ships with it)
-dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
-  package Moq --version 4.20.72
-
-dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
-  package FluentAssertions --version 6.12.1
-
-dotnet add tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj `
-  package FluentValidation --version 11.10.0
-
-# 6. Add the test project to the solution
-dotnet sln PaymentServices.RTPSend.slnx add `
-  tests\PaymentServices.RTPSend.UnitTests\PaymentServices.RTPSend.UnitTests.csproj
+Warning As Error: Detected package downgrade: Microsoft.Azure.Cosmos from 3.60.0 to 3.46.0. Reference the package directly from the project to select a different version. 
+ PaymentServices.RTPSend -> Evolve.Digital.LedgerService.Internal 1.0.0 -> Evolve.Digital.LedgerService.Shared 1.0.0 -> Microsoft.Azure.Cosmos (>= 3.60.0) 
+ PaymentServices.RTPSend -> Microsoft.Azure.Cosmos (>= 3.46.0)
