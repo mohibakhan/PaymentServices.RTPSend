@@ -1,1 +1,24 @@
-System.Collections.Generic.KeyNotFoundException: 'The given key 'gluId' was not present in the dictionary.'
+Microsoft.Azure.Cosmos.CosmosException
+  HResult=0x80131500
+  Source=Microsoft.Azure.Cosmos.Client
+  StackTrace:
+   at Microsoft.Azure.Documents.StoreResult.ToResponse(RequestChargeTracker requestChargeTracker)
+   at Microsoft.Azure.Documents.ConsistencyWriter.WritePrivateAsync(DocumentServiceRequest request, TimeoutHelper timeout, Boolean forceRefresh)
+   at Microsoft.Azure.Documents.RequestRetryUtility.ProcessRequestAsync[TRequest,IRetriableResponse](Func`1 executeAsync, Func`1 prepareRequest, IRequestRetryPolicy`2 policy, CancellationToken cancellationToken, Func`1 inBackoffAlternateCallbackMethod, Nullable`1 minBackoffForInBackoffCallback)
+   at Microsoft.Azure.Documents.ShouldRetryResult.ThrowIfDoneTrying(ExceptionDispatchInfo capturedException)
+   at Microsoft.Azure.Documents.RequestRetryUtility.ProcessRequestAsync[TRequest,IRetriableResponse](Func`1 executeAsync, Func`1 prepareRequest, IRequestRetryPolicy`2 policy, CancellationToken cancellationToken, Func`1 inBackoffAlternateCallbackMethod, Nullable`1 minBackoffForInBackoffCallback)
+   at Microsoft.Azure.Documents.RequestRetryUtility.ProcessRequestAsync[TRequest,IRetriableResponse](Func`1 executeAsync, Func`1 prepareRequest, IRequestRetryPolicy`2 policy, CancellationToken cancellationToken, Func`1 inBackoffAlternateCallbackMethod, Nullable`1 minBackoffForInBackoffCallback)
+   at Microsoft.Azure.Documents.ConsistencyWriter.WriteAsync(DocumentServiceRequest entity, TimeoutHelper timeout, Boolean forceRefresh, CancellationToken cancellationToken)
+   at Microsoft.Azure.Documents.ReplicatedResourceClient.<>c__DisplayClass32_0.<<InvokeAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.Azure.Documents.RequestRetryUtility.ProcessRequestAsync[TRequest,IRetriableResponse](Func`1 executeAsync, Func`1 prepareRequest, IRequestRetryPolicy`2 policy, CancellationToken cancellationToken, Func`1 inBackoffAlternateCallbackMethod, Nullable`1 minBackoffForInBackoffCallback)
+   at Microsoft.Azure.Documents.ShouldRetryResult.ThrowIfDoneTrying(ExceptionDispatchInfo capturedException)
+   at Microsoft.Azure.Documents.RequestRetryUtility.ProcessRequestAsync[TRequest,IRetriableResponse](Func`1 executeAsync, Func`1 prepareRequest, IRequestRetryPolicy`2 policy, CancellationToken cancellationToken, Func`1 inBackoffAlternateCallbackMethod, Nullable`1 minBackoffForInBackoffCallback)
+   at Microsoft.Azure.Documents.RequestRetryUtility.ProcessRequestAsync[TRequest,IRetriableResponse](Func`1 executeAsync, Func`1 prepareRequest, IRequestRetryPolicy`2 policy, CancellationToken cancellationToken, Func`1 inBackoffAlternateCallbackMethod, Nullable`1 minBackoffForInBackoffCallback)
+   at Microsoft.Azure.Documents.StoreClient.ProcessMessageAsync(DocumentServiceRequest request, CancellationToken cancellationToken, IRetryPolicy retryPolicy)
+   at Microsoft.Azure.Cosmos.Handlers.TransportHandler.ProcessMessageAsync(RequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.Azure.Cosmos.Handlers.TransportHandler.SendAsync(RequestMessage request, CancellationToken cancellationToken)
+
+  This exception was originally thrown at this call stack:
+    [External Code]
+    PaymentServices.RTPSend.Services.EvolveLedgerService.ReserveAsync(PaymentServices.RTPSend.Interface.External.LedgerReservationRequest, System.Threading.CancellationToken) in EvolveLedgerService.cs
