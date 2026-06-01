@@ -1,66 +1,22 @@
 {
-    "paymentReference": "b8613de-1c5e-4736-97ae-f9d6b98a1ad8",
-    "sourceAccountId": null,
-    "sourceAccount": {
-        "accountNumber": "9010010000000001",
-        "name": {
-            "company": null,
-            "first": "Earnin",
-            "last": "Merchant"
-        },
-        "address": null,
-        "routingNumber": "084009593",
-        "accountType": "S",
-        "debtorBankMemberID": null,
-        "debtorIdOther": null
+    "id": "13135d7f-bfb0-4a5c-adc9-6ec7870e1bcc",
+    "AccountNumber": "2222222222",
+    "Currency": {
+        "Name": "USD",
+        "Symbol": "USD",
+        "BaseUnit": "Cent",
+        "Decimals": 2
     },
-    "destinationAccountId": null,
-    "destinationAccount": {
-        "accountNumber": "900397187386253",
-        "name": {
-            "company": null,
-            "first": "Sarah",
-            "last": "Robinson"
-        },
-        "routingNumber": "101115315",
-        "accountType": "C",
-        "address": {
-            "addressLines": [
-                "123 First Street"
-            ],
-            "city": "Omaha",
-            "county": null,
-            "countryISOCode": "840",
-            "postalCode": "",
-            "stateCode": "NE"
-        },
-        "phoneNumber": "4022221144",
-        "creditorAgentTCHMemberID": null,
-        "creditorIdOther": null
+    "LastBalance": 50.1,
+    "Metadata": {
+        "accountId": "2222222222"
     },
-    "amount": "0.90",
-    "ultimateDebtor": {
-        "name": "ultimate"
-    },
-    "sourceCurrency": null,
-    "paymentCurrency": null,
-    "softDescriptor":null
-}
-
-
-{
-    "id": "857b7d78-f65c-4928-b52b-f6d7c75168a5",
-    "vAccountNumber": "9010010000000001",
-    "fboAccount": "9900013724",
-    "fboAccountName": "Evolve Bank & Trust",
-    "CIFNO": "EAA0617",
-    "taxId": "222222222",
-    "userIsBusiness": "0",
-    "accountStatus": "ACTIVE",
-    "errorMessage": null,
-    "_rid": "9M85AIR0Hn0IAAAAAAAAAA==",
-    "_self": "dbs/9M85AA==/colls/9M85AIR0Hn0=/docs/9M85AIR0Hn0IAAAAAAAAAA==/",
-    "_etag": "\"8d00808d-0000-0300-0000-6a11b74d0000\"",
+    "LedgerType": "prefund-ledger-v2",
+    "CreatedAt": "2026-05-01T02:48:15.5217257Z",
+    "UpdatedAt": "2026-05-01T03:26:20.6556292Z",
+    "_rid": "uTljALtChTAHAAAAAAAAAA==",
+    "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTAHAAAAAAAAAA==/",
+    "_etag": "\"1500b1b8-0000-0300-0000-69f41d5c0000\"",
     "_attachments": "attachments/",
-    "_ts": 1779545933
+    "_ts": 1777605980
 }
