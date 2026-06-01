@@ -1,7 +1,1 @@
-catch (CosmosException cex)
-{
-    _logger.LogError(
-        "CosmosException: StatusCode={Status} SubStatusCode={SubStatus} ActivityId={Activity} Message={Message}",
-        cex.StatusCode, cex.SubStatusCode, cex.ActivityId, cex.Message);
-    throw;
-}
+{"Response status code does not indicate success: BadRequest (400); Substatus: 1001; ActivityId: f2c594a1-3cd4-4902-ae78-0f345a497867; Reason: (Message: {\"Errors\":[\"PartitionKey extracted from document doesn't match the one specified in the header. Learn more: https://aka.ms/CosmosDB/sql/errors/wrong-pk-value\"]}\r\nActivityId: f2c594a1-3cd4-4902-ae78-0f345a497867, Request URI: /apps/62fb0d96-bb1a-46a1-afc6-6148a88626af/services/054ff3f2-e14c-4655-960e-8f16c614659a/partitions/fb008fcd-f842-45a5-86ab-673ece6ac494/replicas/134230034111687198p, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.26200 cosmos-netstandard-sdk/3.43.1);"}
