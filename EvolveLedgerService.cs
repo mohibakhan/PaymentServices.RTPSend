@@ -79,24 +79,24 @@ public sealed class EvolveLedgerService : ILedgerService
         }
 
         // 4. Post a debit entry (negative amount) tagged with our evolveId
-        var addEntryRequest = new AddEntryRequest
+        var metadata = new Dictionary<string, object>
         {
-            LedgerId = ledger.id,
-            Amount = -amountDecimal,                       // debit — negative
-            Kind = LedgerEntryKind,                        // queried by settlement
-            Trace = new { evolveId = request.EvolveId },
-            IsRemoteAccount = false,
-            Metadata = new Dictionary<string, object>
-            {
-                { "evolveId", request.EvolveId },
-                { "paymentReference", request.PaymentReference },
-                { "clientId", request.ClientId },
-                { "merchantId", request.MerchantId },
-                { "fintechId", request.FintechId },
-                { "Account", request.FboAccountNumber },
-                { "endpoint", "rtpsend" }
-            }
+            { "evolveId", request.EvolveId },
+            { "paymentReference", request.PaymentReference },
+            { "clientId", request.ClientId },
+            { "merchantId", request.MerchantId },
+            { "fintechId", request.FintechId },
+            { "Account", request.FboAccountNumber },
+            { "endpoint", "rtpsend" }
         };
+
+        var addEntryRequest = new AddEntryRequest(
+            LedgerId: ledger.id,
+            Amount: -amountDecimal,                       // debit — negative
+            Trace: new { evolveId = request.EvolveId },
+            Kind: LedgerEntryKind,                        // queried by settlement
+            Metadata: metadata,
+            IsRemoteAccount: false);
 
         try
         {
