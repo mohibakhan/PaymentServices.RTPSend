@@ -4,65 +4,71 @@
 #endregion
 
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using Azure.Identity;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PaymentServices.Shared.Infrastructure;
-using PaymentServices.Shared.Interfaces;
-using PaymentServices.Shared.Models;
 
-namespace PaymentServices.Shared.Extensions;
+namespace PaymentServices.Shared.Infrastructure;
 
-public static class ServiceCollectionExtensions
+public static class CosmosClientSingleton
 {
-    public static IServiceCollection AddPaymentCosmosClient(this IServiceCollection services, IConfiguration configuration, string prefix = "app:AppSettings")
-    {
-        services.AddSingleton(delegate (IServiceProvider sp)
-        {
-            ILogger<CosmosClient> requiredService = sp.GetRequiredService<ILogger<CosmosClient>>();
-            string? endpoint = configuration[prefix + ":COSMOS_ENDPOINT"] ?? string.Empty;
-            string text = configuration[prefix + ":COSMOS_CONNSTRING"] ?? string.Empty;
-            string text2 = configuration["AZURE_CLIENT_ID"] ?? string.Empty;
-            return CosmosClientSingleton.Create(endpoint, string.IsNullOrWhiteSpace(text2) ? null : text2, string.IsNullOrWhiteSpace(text) ? null : text, requiredService);
-        });
-        return services;
-    }
+    private static CosmosClient? _instance;
 
-    public static IServiceCollection AddCosmosContainer(this IServiceCollection services, IConfiguration configuration, string containerName, string serviceKey, string prefix = "app:AppSettings")
-    {
-        services.AddKeyedSingleton(serviceKey, delegate (IServiceProvider sp, object? _)
-        {
-            CosmosClient requiredService = sp.GetRequiredService<CosmosClient>();
-            string databaseId = configuration[prefix + ":COSMOS_DATABASE"] ?? "tptch";
-            return requiredService.GetContainer(databaseId, containerName);
-        });
-        return services;
-    }
+    private static readonly Lock _lock = new Lock();
 
-    public static IServiceCollection AddPaymentServiceBusPublisher(this IServiceCollection services, IConfiguration configuration, string prefix = "app:AppSettings")
+    public static CosmosClient Create(string endpoint, string? managedIdentityClientId = null, string? connectionString = null, ILogger? logger = null)
     {
-        services.AddSingleton((Func<IServiceProvider, IServiceBusPublisher>)delegate (IServiceProvider sp)
+        if (_instance != null)
         {
-            ILogger<ServiceBusPublisher> requiredService = sp.GetRequiredService<ILogger<ServiceBusPublisher>>();
-            string? connectionString = configuration[prefix + ":SERVICE_BUS_CONNSTRING"] ?? throw new InvalidOperationException("SERVICE_BUS_CONNSTRING is required. Prefix=" + prefix);
-            string topicName = configuration[prefix + ":SERVICE_BUS_TOPIC"] ?? "payment-processing";
-            return new ServiceBusPublisher(connectionString, topicName, requiredService);
-        });
-        return services;
-    }
+            return _instance;
+        }
 
-    public static IServiceCollection AddPaymentAppSettings(this IServiceCollection services, IConfiguration configuration, string prefix = "app:AppSettings")
-    {
-        services.AddOptions<AppSettings>().Configure(delegate (AppSettings settings, IConfiguration config)
+        using (_lock.EnterScope())
         {
-            config.GetSection(prefix).Bind(settings);
-        });
-        services.AddOptions<TelemetryAppSettings>().Configure(delegate (TelemetryAppSettings settings, IConfiguration config)
-        {
-            config.GetSection("telemetry").Bind(settings);
-        });
-        return services;
+            if (_instance != null)
+            {
+                return _instance;
+            }
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                Converters = { (JsonConverter)new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+            };
+            new CosmosSerializationOptions().PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase;
+            CosmosClientOptions clientOptions = new CosmosClientOptions
+            {
+                Serializer = new CosmosSystemTextJsonSerializer(options),
+                ConnectionMode = ConnectionMode.Direct,
+                MaxRetryAttemptsOnRateLimitedRequests = 9,
+                MaxRetryWaitTimeOnRateLimitedRequests = TimeSpan.FromSeconds(30L)
+            };
+            if (!string.IsNullOrWhiteSpace(managedIdentityClientId) && !string.IsNullOrWhiteSpace(endpoint))
+            {
+                logger?.LogInformation("CosmosClient initializing with Managed Identity {ClientId}", managedIdentityClientId);
+                DefaultAzureCredential tokenCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+                {
+                    ManagedIdentityClientId = managedIdentityClientId
+                });
+                _instance = new CosmosClient(endpoint, tokenCredential, clientOptions);
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    throw new InvalidOperationException("CosmosClient requires either a Managed Identity client ID + endpoint, or a connection string.");
+                }
+
+                logger?.LogWarning("CosmosClient initializing with connection string — local development mode only");
+                _instance = new CosmosClient(connectionString, clientOptions);
+            }
+
+            return _instance;
+        }
     }
 }
 #if false // Decompilation log
