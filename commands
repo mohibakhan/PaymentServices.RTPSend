@@ -1,26 +1,20 @@
-appcs-pmtsvc-qa-centralus - https://appcs-pmtsvc-qa-centralus.azconfig.io
-
-QA-Evolve-SvcCon - app configuration data owner
-id-pmtsvc-qa-centralus- app configuration data reader
-
-Starting: Push Config to App Configuration - QA
-==============================================================================
-Task         : Azure App Configuration Push
-Description  : Push key-values to an Azure App Configuration instance
-Version      : 6.5.0
-Author       : Microsoft Corporation
-Help         : https://learn.microsoft.com/azure/azure-app-configuration/push-kv-devops-pipeline
-==============================================================================
-Azure App Configuration Push Task is starting up...
-Azure Subscription: Evolve QA
-App Configuration Endpoint: https://appcs-pmtsvc-qa-centralus.azconfig.io
-Strict: false
-File Format: json
-File Content Profile: appconfig/default
-Dry Run: false
-Import Mode: IgnoreMatch
-Separator: ":"
-Label: (No label)
-##[error]Access to the target App Configuration instance was denied. Please ensure the required role assignment is made for the identity running this task. Status code: 403
-Finishing: Push Config to App Configuration - QA
-
+2025-09-23T16:09:02.9714003Z ##[section]Starting: Azure App Configuration - Config
+2025-09-23T16:09:02.9787103Z ==============================================================================
+2025-09-23T16:09:02.9787228Z Task         : Azure App Configuration Push
+2025-09-23T16:09:02.9787946Z Description  : Push key-values to an Azure App Configuration instance
+2025-09-23T16:09:02.9788079Z Version      : 6.5.0
+2025-09-23T16:09:02.9788144Z Author       : Microsoft Corporation
+2025-09-23T16:09:02.9788210Z Help         : https://learn.microsoft.com/azure/azure-app-configuration/push-kv-devops-pipeline
+2025-09-23T16:09:02.9788332Z ==============================================================================
+2025-09-23T16:09:03.8151610Z Azure App Configuration Push Task is starting up...
+2025-09-23T16:09:03.8152011Z Azure Subscription: Evolve QA
+2025-09-23T16:09:03.8152318Z App Configuration Endpoint: https://appcs-pmtsvc-qa-centralus.azconfig.io
+2025-09-23T16:09:03.8152604Z Strict: false
+2025-09-23T16:09:03.8152850Z File Format: json
+2025-09-23T16:09:03.8153181Z File Content Profile: appconfig/default
+2025-09-23T16:09:03.8153427Z Dry Run: false
+2025-09-23T16:09:03.8153665Z Import Mode: All
+2025-09-23T16:09:03.8153910Z Separator: ","
+2025-09-23T16:09:03.8154148Z Label: (No label)
+2025-09-23T16:09:06.7880191Z '20' key-values were uploaded to Azure App Configuration.
+2025-09-23T16:09:06.7958627Z ##[section]Finishing: Azure App Configuration - Config
