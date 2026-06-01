@@ -1,22 +1,21 @@
 {
-    "id": "13135d7f-bfb0-4a5c-adc9-6ec7870e1bcc",
-    "AccountNumber": "2222222222",
-    "Currency": {
-        "Name": "USD",
-        "Symbol": "USD",
-        "BaseUnit": "Cent",
-        "Decimals": 2
-    },
-    "LastBalance": 50.1,
+    "id": "071368e8-afd0-4a81-9b15-d26c43bc02c3",
+    "LedgerId": "3ec0640d-9d4d-4358-b8ee-9080d8554173",
+    "AccountNumber": "9990000001",
+    "Amount": -50,
+    "GluId": "e2dd9345-786a-4719-a1ca-c0aaff725d57",
+    "TransactionId": "test-evolve-alice-bob-001",
+    "Kind": "tptch.send",
+    "Status": "Completed",
     "Metadata": {
-        "accountId": "2222222222"
+        "postedAt": "2026-05-01T03:01:31.9061112Z",
+        "correlationId": "76d9263b-be5e-451f-8eb1-7d0d9e12d95f",
+        "evolveId": "test-evolve-alice-bob-001"
     },
-    "LedgerType": "prefund-ledger-v2",
-    "CreatedAt": "2026-05-01T02:48:15.5217257Z",
-    "UpdatedAt": "2026-05-01T03:26:20.6556292Z",
-    "_rid": "uTljALtChTAHAAAAAAAAAA==",
-    "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTAHAAAAAAAAAA==/",
-    "_etag": "\"1500b1b8-0000-0300-0000-69f41d5c0000\"",
+    "CreatedAt": "2026-05-01T03:01:31.8651427Z",
+    "_rid": "uTljAJY3Gg8ZAAAAAAAAAA==",
+    "_self": "dbs/uTljAA==/colls/uTljAJY3Gg8=/docs/uTljAJY3Gg8ZAAAAAAAAAA==/",
+    "_etag": "\"4b0068ac-0000-0300-0000-69f4178d0000\"",
     "_attachments": "attachments/",
-    "_ts": 1777605980
+    "_ts": 1777604493
 }
