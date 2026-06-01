@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using PaymentServices.RTPSend.Constants;
 using PaymentServices.RTPSend.Exceptions;
 using PaymentServices.RTPSend.Helpers;
+using PaymentServices.RTPSend.Interface.Adapters;
 using PaymentServices.RTPSend.Interface.External;
 using PaymentServices.RTPSend.Interface.Services;
 using PaymentServices.RTPSend.Models.Cosmos;
@@ -34,6 +35,7 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
     private readonly ILedgerService _ledgerService;
     private readonly ITabaPaySendService _tabaPay;
     private readonly IServiceBusMessageService _serviceBus;
+    private readonly IPaymentCosmosDBAdapter _paymentCosmosDB;
     private readonly RtpSendSettings _settings;
     private readonly ILogger<PaymentOrchestrator> _logger;
 
@@ -43,6 +45,7 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
         ILedgerService ledgerService,
         ITabaPaySendService tabaPay,
         IServiceBusMessageService serviceBus,
+        IPaymentCosmosDBAdapter paymentCosmosDB,
         IOptions<RtpSendSettings> settings,
         ILogger<PaymentOrchestrator> logger)
     {
@@ -51,6 +54,7 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
         _ledgerService = ledgerService;
         _tabaPay = tabaPay;
         _serviceBus = serviceBus;
+        _paymentCosmosDB = paymentCosmosDB;
         _settings = settings.Value;
         _logger = logger;
     }
@@ -209,6 +213,29 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
         _logger.LogInformation(
             "Ledger reservation {ReservationId} for evolveId {EvolveId}",
             ledgerResult.ReservationId, payment.EvolveId);
+
+        // Persist that ledger succeeded BEFORE calling TabaPay. This advances
+        // the document's stage to TABAPAY so that, if the process crashes
+        // after the ledger debit but before/within TabaPay, the SB redelivery
+        // resumes at TABAPAY — NOT at LEDGER. The ledger entry is not
+        // idempotent (fresh gluId each call), so re-running it would
+        // double-debit. Status is INITIATED (non-terminal) — the payment is
+        // not COMPLETED until TabaPay succeeds.
+        var ledgerPatches = EvolvePaymentRequestHelper.GetStatusPatchOperation(
+            RequestStage.TABAPAY,
+            RequestStatus.INITIATED,
+            additionalInfo: new
+            {
+                Message = "Ledger reservation completed",
+                ReservationId = ledgerResult.ReservationId
+            });
+
+        await _paymentCosmosDB.PatchItemAsync(payment, ledgerPatches);
+
+        // Keep the in-memory object consistent with what we just persisted so
+        // the TabaPay stage and any subsequent resume see the advanced stage.
+        payment.Stage = RequestStage.TABAPAY.ToString();
+        payment.Status = RequestStatus.INITIATED.ToString();
     }
 
     private static LimitCheckRequest BuildLimitRequest(EvolvePaymentRequest p) => new()

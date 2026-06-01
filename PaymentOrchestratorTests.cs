@@ -1,7 +1,10 @@
+﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Moq;
 using PaymentServices.RTPSend.Constants;
 using PaymentServices.RTPSend.Exceptions;
+using PaymentServices.RTPSend.Interface.Adapters;
 using PaymentServices.RTPSend.Interface.External;
 using PaymentServices.RTPSend.Interface.Services;
 using PaymentServices.RTPSend.Models;
@@ -21,6 +24,7 @@ public class PaymentOrchestratorTests
     private readonly Mock<ILedgerService> _ledgerService = new();
     private readonly Mock<ITabaPaySendService> _tabaPay = new();
     private readonly Mock<IServiceBusMessageService> _serviceBus = new();
+    private readonly Mock<IPaymentCosmosDBAdapter> _paymentCosmosDB = new();
     private readonly PaymentOrchestrator _sut;
 
     public PaymentOrchestratorTests()
@@ -52,12 +56,18 @@ public class PaymentOrchestratorTests
                 It.IsAny<ServiceBusContentModel>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
+        _paymentCosmosDB
+            .Setup(c => c.PatchItemAsync(
+                It.IsAny<EvolvePaymentRequest>(), It.IsAny<List<PatchOperation>>()))
+            .ReturnsAsync((EvolvePaymentRequest p, List<PatchOperation> _) => p);
+
         _sut = new PaymentOrchestrator(
             _partnerLedger.Object,
             _limitService.Object,
             _ledgerService.Object,
             _tabaPay.Object,
             _serviceBus.Object,
+            _paymentCosmosDB.Object,
             Options.Create(new RtpSendSettings()),
             Mock.Of<ILogger<PaymentOrchestrator>>());
     }
@@ -90,6 +100,43 @@ public class PaymentOrchestratorTests
                 It.IsAny<ServiceBusContentModel>(),
                 PaymentRequestConstants.SuccessServiceBusSubject),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_AfterLedgerSuccess_PersistsStageAdvanceToTabaPay()
+    {
+        var payment = TestDataBuilder.AnEvolvePaymentAtStage(RequestStage.RTP_API);
+
+        await _sut.ProcessAsync(payment);
+
+        // The ledger-success patch must advance stage to TABAPAY so a crash
+        // before/within TabaPay resumes at TABAPAY (not LEDGER) — preventing a
+        // double debit on redelivery.
+        _paymentCosmosDB.Verify(c => c.PatchItemAsync(
+                It.IsAny<EvolvePaymentRequest>(),
+                It.Is<List<PatchOperation>>(ops =>
+                    ops.Any(o => o.OperationType == PatchOperationType.Replace))),
+            Times.AtLeastOnce);
+
+        Assert.Equal(RequestStage.TABAPAY.ToString(), payment.Stage);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenLedgerFails_DoesNotPatchStageAdvanceOrCallTabaPay()
+    {
+        _ledgerService
+            .Setup(l => l.ReserveAsync(It.IsAny<LedgerReservationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(LedgerReservationResult.Failed("ledger down"));
+
+        var payment = TestDataBuilder.AnEvolvePaymentAtStage(RequestStage.RTP_API);
+
+        await Assert.ThrowsAsync<LedgerReservationException>(() => _sut.ProcessAsync(payment));
+
+        // Ledger failed → no stage-advance patch, no TabaPay call.
+        _paymentCosmosDB.Verify(c => c.PatchItemAsync(
+                It.IsAny<EvolvePaymentRequest>(), It.IsAny<List<PatchOperation>>()),
+            Times.Never);
+        _tabaPay.Verify(t => t.ProcessPayment(It.IsAny<EvolvePaymentRequest>()), Times.Never);
     }
 
     // -------------------------------------------------------------------------
