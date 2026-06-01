@@ -1,21 +1,34 @@
 {
-    "id": "071368e8-afd0-4a81-9b15-d26c43bc02c3",
-    "LedgerId": "3ec0640d-9d4d-4358-b8ee-9080d8554173",
-    "AccountNumber": "9990000001",
-    "Amount": -50,
-    "GluId": "e2dd9345-786a-4719-a1ca-c0aaff725d57",
-    "TransactionId": "test-evolve-alice-bob-001",
-    "Kind": "tptch.send",
-    "Status": "Completed",
-    "Metadata": {
-        "postedAt": "2026-05-01T03:01:31.9061112Z",
-        "correlationId": "76d9263b-be5e-451f-8eb1-7d0d9e12d95f",
-        "evolveId": "test-evolve-alice-bob-001"
-    },
-    "CreatedAt": "2026-05-01T03:01:31.8651427Z",
-    "_rid": "uTljAJY3Gg8ZAAAAAAAAAA==",
-    "_self": "dbs/uTljAA==/colls/uTljAJY3Gg8=/docs/uTljAJY3Gg8ZAAAAAAAAAA==/",
-    "_etag": "\"4b0068ac-0000-0300-0000-69f4178d0000\"",
-    "_attachments": "attachments/",
-    "_ts": 1777604493
+  "id": "a0c1b2d3-e4f5-6789-abcd-ef0123456789",
+  "AccountNumber": "9900013724",
+  "Currency": {
+    "Name": "USD",
+    "Symbol": "USD",
+    "BaseUnit": "Cent",
+    "Decimals": 2
+  },
+  "LastBalance": 1000.00,
+  "Metadata": {
+    "accountId": "9900013724"
+  },
+  "LedgerType": "prefund-ledger-v2",
+  "CreatedAt": "2026-05-26T00:00:00Z",
+  "UpdatedAt": "2026-05-26T00:00:00Z"
+}
+
+{
+  "id": "b1c2d3e4-f5a6-7890-bcde-f01234567890",
+  "LedgerId": "a0c1b2d3-e4f5-6789-abcd-ef0123456789",
+  "AccountNumber": "9900013724",
+  "Amount": 1000.00,
+  "GluId": "c2d3e4f5-a6b7-8901-cdef-012345678901",
+  "TransactionId": "seed-rtpsend-dev",
+  "Kind": "seed",
+  "Status": "Completed",
+  "Metadata": {
+    "postedAt": "2026-05-01T00:00:00Z",
+    "correlationId": "seed-rtpsend-dev",
+    "note": "manual seed for RTPSend dev testing"
+  },
+  "CreatedAt": "2026-05-01T00:00:00Z"
 }
