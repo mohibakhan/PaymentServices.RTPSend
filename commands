@@ -2,3 +2,25 @@ appcs-pmtsvc-qa-centralus - https://appcs-pmtsvc-qa-centralus.azconfig.io
 
 QA-Evolve-SvcCon - app configuration data owner
 id-pmtsvc-qa-centralus- app configuration data reader
+
+Starting: Push Config to App Configuration - QA
+==============================================================================
+Task         : Azure App Configuration Push
+Description  : Push key-values to an Azure App Configuration instance
+Version      : 6.5.0
+Author       : Microsoft Corporation
+Help         : https://learn.microsoft.com/azure/azure-app-configuration/push-kv-devops-pipeline
+==============================================================================
+Azure App Configuration Push Task is starting up...
+Azure Subscription: Evolve QA
+App Configuration Endpoint: https://appcs-pmtsvc-qa-centralus.azconfig.io
+Strict: false
+File Format: json
+File Content Profile: appconfig/default
+Dry Run: false
+Import Mode: IgnoreMatch
+Separator: ":"
+Label: (No label)
+##[error]Access to the target App Configuration instance was denied. Please ensure the required role assignment is made for the identity running this task. Status code: 403
+Finishing: Push Config to App Configuration - QA
+
