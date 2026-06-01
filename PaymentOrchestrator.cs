@@ -14,7 +14,7 @@ namespace PaymentServices.RTPSend.Services;
 public interface IPaymentOrchestrator
 {
     /// <summary>
-    /// Runs the full pipeline: PartnerLedger → Limit → Ledger → TabaPay.
+    /// Runs the full pipeline: PartnerLedger > Limit > Ledger > TabaPay.
     /// Publishes a terminal outcome envelope on completion.
     /// </summary>
     Task<EvolvePaymentRequest> ProcessAsync(EvolvePaymentRequest payment, CancellationToken cancellationToken = default);
@@ -81,7 +81,8 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
 
     /// <summary>
     /// Reads payment.Stage + payment.Status from the persisted Cosmos document
-    /// and decides which stage to start from. If already completed, returns null.
+    /// and decides which stage to start from. If already completed or terminally
+    /// failed, returns null.
     /// </summary>
     private static RequestStage? DetermineResumeStage(EvolvePaymentRequest payment)
     {
@@ -89,26 +90,31 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
         if (payment.Status == RequestStatus.COMPLETED.ToString())
             return null;
 
+        // Terminal NSF failure — no resume, ever. The funds situation isn't
+        // going to fix itself via retry.
+        if (payment.Status == RequestStatus.FAILED_NSF.ToString())
+            return null;
+
         // Map last attempted stage → which stage to retry from.
         return payment.Stage switch
         {
             // Initial state: never started
-            nameof(RequestStage.RTP_API)        => RequestStage.ACCOUNTLOOKUP,
+            nameof(RequestStage.RTP_API) => RequestStage.ACCOUNTLOOKUP,
 
             // Partner-ledger failed: retry from there
-            nameof(RequestStage.ACCOUNTLOOKUP)  => RequestStage.ACCOUNTLOOKUP,
+            nameof(RequestStage.ACCOUNTLOOKUP) => RequestStage.ACCOUNTLOOKUP,
 
             // Limit check failed: retry from limit
-            nameof(RequestStage.LIMIT)          => RequestStage.LIMIT,
+            nameof(RequestStage.LIMIT) => RequestStage.LIMIT,
 
             // Ledger reservation failed: retry from ledger
-            nameof(RequestStage.LEDGER)         => RequestStage.LEDGER,
+            nameof(RequestStage.LEDGER) => RequestStage.LEDGER,
 
             // TabaPay failed: retry TabaPay only
-            nameof(RequestStage.TABAPAY)        => RequestStage.TABAPAY,
+            nameof(RequestStage.TABAPAY) => RequestStage.TABAPAY,
 
             // Anything unexpected: start over from the beginning
-            _                                    => RequestStage.ACCOUNTLOOKUP
+            _ => RequestStage.ACCOUNTLOOKUP
         };
     }
 
@@ -167,7 +173,31 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
 
     private async Task ReserveLedgerAsync(EvolvePaymentRequest payment, CancellationToken cancellationToken)
     {
-        var ledgerResult = await _ledgerService.ReserveAsync(BuildLedgerRequest(payment), cancellationToken);
+        LedgerReservationResult ledgerResult;
+
+        try
+        {
+            ledgerResult = await _ledgerService.ReserveAsync(BuildLedgerRequest(payment), cancellationToken);
+        }
+        catch (InsufficientFundsException nsf)
+        {
+            // Terminal — publish the NSF outcome so downstream consumers see it,
+            // then rethrow. ProcessPayment will catch this specifically, patch
+            // the Cosmos doc to FAILED_NSF, and complete the SB message
+            // (no retry, no DLQ).
+            _logger.LogWarning(
+                "NSF for evolveId {EvolveId}: balance={Balance}, requested={Requested}",
+                payment.EvolveId, nsf.CurrentBalance, nsf.RequestedAmount);
+
+            await PublishOutcomeAsync(
+                payment,
+                success: false,
+                subject: PaymentRequestConstants.FailureServiceBusSubject,
+                tabaPayResponse: null,
+                message: nsf.Message);
+            throw;
+        }
+
         if (!ledgerResult.Success)
         {
             _logger.LogWarning(

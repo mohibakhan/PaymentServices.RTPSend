@@ -1,0 +1,145 @@
+using System.Text.Json;
+using Azure.Messaging.ServiceBus;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
+using PaymentServices.RTPSend.Exceptions;
+using PaymentServices.RTPSend.Interface.Adapters;
+using PaymentServices.RTPSend.Models;
+using PaymentServices.RTPSend.Models.Domain;
+using PaymentServices.RTPSend.Services;
+
+namespace PaymentServices.RTPSend.Functions;
+
+/// <summary>
+/// Service Bus-triggered worker. Consumes <see cref="PaymentQueueMessage"/>
+/// instances from RTPSend's subscription on the shared <c>payment-processing</c>
+/// topic. The subscription filter (set up in bicep) matches only messages
+/// with Subject = "CreatePaymentRequest" so outcome envelopes for other
+/// services are ignored.
+///
+/// Calls <see cref="IPaymentOrchestrator.ResumeFromAsync"/> rather than
+/// ProcessAsync so SB redeliveries are stage-aware — a retry after a TabaPay
+/// failure picks up at TabaPay only, without re-running PartnerLedger / Limit
+/// / Ledger. On the very first delivery the payment is in stage RTP_API, so
+/// resume starts at PartnerLedger as expected.
+///
+/// Behavior on failure:
+///   - <see cref="InsufficientFundsException"/> (NSF) is TERMINAL: patch the
+///     Cosmos doc to FAILED_NSF and return normally so SB completes the
+///     message (no retry, no DLQ). The failure envelope is already published
+///     by the orchestrator before it throws.
+///   - Any other exception bubbles up, SB increments the message's delivery
+///     count, and after MaxDeliveryCount the message is automatically
+///     dead-lettered. The <c>RetryFailedPayments</c> timer drains that DLQ.
+/// </summary>
+public class ProcessPayment
+{
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
+    };
+
+    private readonly IPaymentCosmosDBAdapter _paymentCosmosDB;
+    private readonly IPaymentOrchestrator _orchestrator;
+    private readonly ILogger<ProcessPayment> _logger;
+
+    public ProcessPayment(
+        IPaymentCosmosDBAdapter paymentCosmosDB,
+        IPaymentOrchestrator orchestrator,
+        ILogger<ProcessPayment> logger)
+    {
+        _paymentCosmosDB = paymentCosmosDB;
+        _orchestrator = orchestrator;
+        _logger = logger;
+    }
+
+    [Function(nameof(ProcessPayment))]
+    public async Task Run(
+        [ServiceBusTrigger(
+            topicName: "payment-processing",
+            subscriptionName: "rtpsend-process",
+            Connection = "SERVICE_BUS_CONNSTRING")]
+        ServiceBusReceivedMessage message,
+        CancellationToken cancellationToken)
+    {
+        var body = message.Body.ToString();
+        _logger.LogInformation("ProcessPayment received message {MessageId}: {Body}",
+            message.MessageId, body);
+
+        PaymentQueueMessage? envelope;
+        try
+        {
+            envelope = JsonSerializer.Deserialize<PaymentQueueMessage>(body, _jsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            // Permanently malformed payload — re-throwing would just put it on the DLQ
+            // eventually anyway, but with a useful error. We let SB handle the retry.
+            _logger.LogError(ex, "Cannot deserialize message {MessageId}; will retry then DLQ.",
+                message.MessageId);
+            throw;
+        }
+
+        if (envelope is null || string.IsNullOrWhiteSpace(envelope.EvolveId))
+        {
+            _logger.LogError("Message {MessageId} missing evolveId; throwing to DLQ.", message.MessageId);
+            throw new InvalidOperationException($"Message {message.MessageId} missing evolveId");
+        }
+
+        // Source of truth = the persisted Cosmos document.
+        var payment = (await _paymentCosmosDB.FindAllItemsAsync(envelope.EvolveId)).FirstOrDefault();
+        if (payment is null)
+        {
+            _logger.LogError(
+                "No payment document for evolveId {EvolveId} (paymentReference {Ref}); throwing to DLQ.",
+                envelope.EvolveId, envelope.PaymentReference);
+            throw new InvalidOperationException(
+                $"No payment document found for evolveId {envelope.EvolveId}");
+        }
+
+        _logger.LogInformation(
+            "Processing payment evolveId {EvolveId} at stage {Stage}, status {Status}, delivery {DeliveryCount}",
+            envelope.EvolveId, payment.Stage, payment.Status, message.DeliveryCount);
+
+        try
+        {
+            // ResumeFromAsync (not ProcessAsync) so SB redeliveries are stage-aware:
+            // a retry after TabaPay failure skips re-running PartnerLedger / Limit /
+            // Ledger and goes straight to TabaPay. On the first delivery the payment
+            // is in stage RTP_API, so this is equivalent to ProcessAsync.
+            await _orchestrator.ResumeFromAsync(payment, cancellationToken);
+
+            _logger.LogInformation("Processing completed for evolveId {EvolveId}", envelope.EvolveId);
+        }
+        catch (InsufficientFundsException nsf)
+        {
+            // TERMINAL. The orchestrator already published the NSF failure envelope
+            // before throwing. We just need to patch the Cosmos doc with the
+            // FAILED_NSF status, then return normally so SB completes the message
+            // (no retry, no DLQ).
+            _logger.LogWarning(
+                "Payment {EvolveId} terminated due to NSF: balance={Balance}, requested={Requested}. " +
+                "Completing SB message — no retry.",
+                envelope.EvolveId, nsf.CurrentBalance, nsf.RequestedAmount);
+
+            var patchOps = new List<Microsoft.Azure.Cosmos.PatchOperation>
+            {
+                Microsoft.Azure.Cosmos.PatchOperation.Replace("/stage", nameof(RequestStage.LEDGER)),
+                Microsoft.Azure.Cosmos.PatchOperation.Replace("/status", nameof(RequestStatus.FAILED_NSF)),
+                Microsoft.Azure.Cosmos.PatchOperation.Add("/statusHistory/-", new
+                {
+                    stage = nameof(RequestStage.LEDGER),
+                    status = nameof(RequestStatus.FAILED_NSF),
+                    timestamp = DateTime.UtcNow,
+                    message = nsf.Message,
+                    currentBalance = nsf.CurrentBalance,
+                    requestedAmount = nsf.RequestedAmount
+                }),
+                Microsoft.Azure.Cosmos.PatchOperation.Set("/modifiedTimeStamp", DateTime.UtcNow)
+            };
+
+            await _paymentCosmosDB.PatchItemAsync(payment, patchOps);
+        }
+    }
+}
