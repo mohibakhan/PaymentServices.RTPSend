@@ -1,3 +1,1 @@
-Warning As Error: Detected package downgrade: Microsoft.Azure.Cosmos from 3.60.0 to 3.46.0. Reference the package directly from the project to select a different version. 
- PaymentServices.RTPSend -> Evolve.Digital.LedgerService.Internal 1.0.0 -> Evolve.Digital.LedgerService.Shared 1.0.0 -> Microsoft.Azure.Cosmos (>= 3.60.0) 
- PaymentServices.RTPSend -> Microsoft.Azure.Cosmos (>= 3.46.0)
+There is no argument given that corresponds to the required parameter 'LedgerId' of 'AddEntryRequest.AddEntryRequest(string, decimal, object?, string, Dictionary<string, object>?, bool)'
