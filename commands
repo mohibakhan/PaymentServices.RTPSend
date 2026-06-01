@@ -1,19 +1,139 @@
+#region Assembly PaymentServices.Shared, Version=1.0.3.0, Culture=neutral, PublicKeyToken=null
+// C:\Users\mxk221019\.nuget\packages\paymentservices.shared\1.0.3\lib\net10.0\PaymentServices.Shared.dll
+// Decompiled with ICSharpCode.Decompiler 9.1.0.7988
+#endregion
+
+using System;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using PaymentServices.Shared.Infrastructure;
+using PaymentServices.Shared.Interfaces;
+using PaymentServices.Shared.Models;
+
+namespace PaymentServices.Shared.Extensions;
+
+public static class ServiceCollectionExtensions
 {
-    "id": "a0c1b2d3-e4f5-6789-abcd-ef0123456789",
-    "currency": {
-        "name": "US Dollar",
-        "symbol": "USD",
-        "baseUnit": "Cent",
-        "decimals": 2
-    },
-    "lastBalance": 999.1,
-    "metadata": {},
-    "createdAt": "2026-06-01T04:34:44.7419673Z",
-    "updatedAt": "2026-06-01T04:49:01.6263665Z",
-    "ledgerType": "prefund-ledger-v2",
-    "_rid": "uTljALtChTAIAAAAAAAAAA==",
-    "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTAIAAAAAAAAAA==/",
-    "_etag": "\"9902c3fa-0000-0300-0000-6a1d0f3d0000\"",
-    "_attachments": "attachments/",
-    "_ts": 1780289341
+    public static IServiceCollection AddPaymentCosmosClient(this IServiceCollection services, IConfiguration configuration, string prefix = "app:AppSettings")
+    {
+        services.AddSingleton(delegate (IServiceProvider sp)
+        {
+            ILogger<CosmosClient> requiredService = sp.GetRequiredService<ILogger<CosmosClient>>();
+            string? endpoint = configuration[prefix + ":COSMOS_ENDPOINT"] ?? string.Empty;
+            string text = configuration[prefix + ":COSMOS_CONNSTRING"] ?? string.Empty;
+            string text2 = configuration["AZURE_CLIENT_ID"] ?? string.Empty;
+            return CosmosClientSingleton.Create(endpoint, string.IsNullOrWhiteSpace(text2) ? null : text2, string.IsNullOrWhiteSpace(text) ? null : text, requiredService);
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddCosmosContainer(this IServiceCollection services, IConfiguration configuration, string containerName, string serviceKey, string prefix = "app:AppSettings")
+    {
+        services.AddKeyedSingleton(serviceKey, delegate (IServiceProvider sp, object? _)
+        {
+            CosmosClient requiredService = sp.GetRequiredService<CosmosClient>();
+            string databaseId = configuration[prefix + ":COSMOS_DATABASE"] ?? "tptch";
+            return requiredService.GetContainer(databaseId, containerName);
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddPaymentServiceBusPublisher(this IServiceCollection services, IConfiguration configuration, string prefix = "app:AppSettings")
+    {
+        services.AddSingleton((Func<IServiceProvider, IServiceBusPublisher>)delegate (IServiceProvider sp)
+        {
+            ILogger<ServiceBusPublisher> requiredService = sp.GetRequiredService<ILogger<ServiceBusPublisher>>();
+            string? connectionString = configuration[prefix + ":SERVICE_BUS_CONNSTRING"] ?? throw new InvalidOperationException("SERVICE_BUS_CONNSTRING is required. Prefix=" + prefix);
+            string topicName = configuration[prefix + ":SERVICE_BUS_TOPIC"] ?? "payment-processing";
+            return new ServiceBusPublisher(connectionString, topicName, requiredService);
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddPaymentAppSettings(this IServiceCollection services, IConfiguration configuration, string prefix = "app:AppSettings")
+    {
+        services.AddOptions<AppSettings>().Configure(delegate (AppSettings settings, IConfiguration config)
+        {
+            config.GetSection(prefix).Bind(settings);
+        });
+        services.AddOptions<TelemetryAppSettings>().Configure(delegate (TelemetryAppSettings settings, IConfiguration config)
+        {
+            config.GetSection("telemetry").Bind(settings);
+        });
+        return services;
+    }
 }
+#if false // Decompilation log
+'391' items in cache
+------------------
+Resolve: 'System.Runtime, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Found single assembly: 'System.Runtime, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.5\ref\net10.0\System.Runtime.dll'
+------------------
+Resolve: 'System.Text.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+Found single assembly: 'System.Text.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.5\ref\net10.0\System.Text.Json.dll'
+------------------
+Resolve: 'System.Collections, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Found single assembly: 'System.Collections, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.5\ref\net10.0\System.Collections.dll'
+------------------
+Resolve: 'Microsoft.Azure.Cosmos.Client, Version=3.46.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35'
+Found single assembly: 'Microsoft.Azure.Cosmos.Client, Version=3.60.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35'
+WARN: Version mismatch. Expected: '3.46.0.0', Got: '3.60.0.0'
+Load from: 'C:\Users\mxk221019\.nuget\packages\microsoft.azure.cosmos\3.60.0\lib\netstandard2.0\Microsoft.Azure.Cosmos.Client.dll'
+------------------
+Resolve: 'Microsoft.Extensions.Logging.Abstractions, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Found single assembly: 'Microsoft.Extensions.Logging.Abstractions, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.AspNetCore.App.Ref\10.0.5\ref\net10.0\Microsoft.Extensions.Logging.Abstractions.dll'
+------------------
+Resolve: 'Azure.Identity, Version=1.13.2.0, Culture=neutral, PublicKeyToken=92742159e12e44c8'
+Found single assembly: 'Azure.Identity, Version=1.13.2.0, Culture=neutral, PublicKeyToken=92742159e12e44c8'
+Load from: 'C:\Users\mxk221019\.nuget\packages\azure.identity\1.13.2\lib\net8.0\Azure.Identity.dll'
+------------------
+Resolve: 'Azure.Messaging.ServiceBus, Version=7.18.4.0, Culture=neutral, PublicKeyToken=92742159e12e44c8'
+Found single assembly: 'Azure.Messaging.ServiceBus, Version=7.18.4.0, Culture=neutral, PublicKeyToken=92742159e12e44c8'
+Load from: 'C:\Users\mxk221019\.nuget\packages\azure.messaging.servicebus\7.18.4\lib\net8.0\Azure.Messaging.ServiceBus.dll'
+------------------
+Resolve: 'Microsoft.Extensions.DependencyInjection.Abstractions, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Found single assembly: 'Microsoft.Extensions.DependencyInjection.Abstractions, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.AspNetCore.App.Ref\10.0.5\ref\net10.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll'
+------------------
+Resolve: 'Microsoft.Extensions.Configuration.Abstractions, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Found single assembly: 'Microsoft.Extensions.Configuration.Abstractions, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Load from: 'C:\Users\mxk221019\.nuget\packages\microsoft.extensions.configuration.abstractions\10.0.6\lib\net10.0\Microsoft.Extensions.Configuration.Abstractions.dll'
+------------------
+Resolve: 'System.ComponentModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Found single assembly: 'System.ComponentModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.5\ref\net10.0\System.ComponentModel.dll'
+------------------
+Resolve: 'Azure.Core, Version=1.44.1.0, Culture=neutral, PublicKeyToken=92742159e12e44c8'
+Found single assembly: 'Azure.Core, Version=1.44.1.0, Culture=neutral, PublicKeyToken=92742159e12e44c8'
+Load from: 'C:\Users\mxk221019\.nuget\packages\azure.core\1.44.1\lib\net6.0\Azure.Core.dll'
+------------------
+Resolve: 'System.Memory.Data, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+Found single assembly: 'System.Memory.Data, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+Load from: 'C:\Users\mxk221019\.nuget\packages\system.memory.data\6.0.0\lib\net6.0\System.Memory.Data.dll'
+------------------
+Resolve: 'Microsoft.Extensions.Options, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Found single assembly: 'Microsoft.Extensions.Options, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.AspNetCore.App.Ref\10.0.5\ref\net10.0\Microsoft.Extensions.Options.dll'
+------------------
+Resolve: 'System.Net.Primitives, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Found single assembly: 'System.Net.Primitives, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.5\ref\net10.0\System.Net.Primitives.dll'
+------------------
+Resolve: 'Microsoft.Extensions.Configuration.Binder, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Found single assembly: 'Microsoft.Extensions.Configuration.Binder, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'
+Load from: 'C:\Users\mxk221019\.nuget\packages\microsoft.extensions.configuration.binder\10.0.6\lib\net10.0\Microsoft.Extensions.Configuration.Binder.dll'
+------------------
+Resolve: 'System.Runtime.InteropServices, Version=10.0.0.0, Culture=neutral, PublicKeyToken=null'
+Found single assembly: 'System.Runtime.InteropServices, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.5\ref\net10.0\System.Runtime.InteropServices.dll'
+------------------
+Resolve: 'System.Runtime.CompilerServices.Unsafe, Version=10.0.0.0, Culture=neutral, PublicKeyToken=null'
+Found single assembly: 'System.Runtime.CompilerServices.Unsafe, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+Load from: 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.5\ref\net10.0\System.Runtime.CompilerServices.Unsafe.dll'
+#endif
