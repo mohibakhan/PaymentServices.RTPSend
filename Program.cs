@@ -84,7 +84,7 @@ public static class Program
                 services.AddScoped<RtpSendILimitService, NoOpLimitService>();
 
                 // Real ledger service via Evolve.Digital.LedgerService.Shared(.Internal)
-                RegisterLedgerServices(services);
+                RegisterLedgerServices(services, config);
 
                 // Core business services
                 services.AddScoped<IPartnerLedgerSystem, PartnerLedgerSystem>();
@@ -202,26 +202,41 @@ public static class Program
     /// services and wires RTPSend's ILedgerService to the adapter
     /// (EvolveLedgerService) that delegates to ILedgerInternalClient.
     ///
-    /// Ledger data lives in a SEPARATE Cosmos database from RTPSend's data,
-    /// but in the SAME Cosmos account — so we reuse the registered CosmosClient.
+    /// Ledger data lives in a SEPARATE Cosmos database from RTPSend's data
+    /// (same Cosmos account).
+    ///
+    /// IMPORTANT — Why a SEPARATE CosmosClient (keyed "ledger"):
+    /// The default CosmosClient registered by PaymentServices.Shared uses
+    /// camelCase property naming. The upstream Ledger / LedgerEntry models
+    /// in Evolve.Digital.LedgerService.Shared are PascalCase. Sharing the
+    /// camelCase client would silently corrupt round-tripped ledger docs
+    /// (AccountNumber → accountNumber, etc.) and break partition-key reads.
+    ///
+    /// AddKeyedPaymentCosmosClient with useDefaultSerializer:true gives us
+    /// a separate CosmosClient instance that uses the SDK default serializer
+    /// (PascalCase). Resolve with GetRequiredKeyedService&lt;CosmosClient&gt;("ledger").
     /// </summary>
-    private static void RegisterLedgerServices(IServiceCollection services)
+    private static void RegisterLedgerServices(IServiceCollection services, IConfiguration config)
     {
-        // Upstream library's ILedgerService (concrete LedgerService — needs
-        // CosmosClient + database name)
+        // Dedicated PascalCase-preserving CosmosClient for the ledger library.
+        services.AddKeyedPaymentCosmosClient(
+            configuration: config,
+            serviceKey: "ledger",
+            prefix: Prefix,
+            useDefaultSerializer: true);
+
+        // Upstream library's ILedgerService — pass the LEDGER-DEDICATED client
         services.AddSingleton<LedgerLibILedgerService>(sp =>
         {
-            var cosmos = sp.GetRequiredService<CosmosClient>();
+            var cosmos = sp.GetRequiredKeyedService<CosmosClient>("ledger");
             var settings = sp.GetRequiredService<IOptions<RtpSendSettings>>().Value;
             return new LedgerLibLedgerService(cosmos, settings.LEDGER_COSMOS_DATABASE);
         });
 
-        // Upstream library's IBatchService — same constructor shape as
-        // LedgerService. If BatchService takes a different signature, swap
-        // this line for whatever its real constructor expects.
+        // Upstream library's IBatchService — same client
         services.AddSingleton<IBatchService>(sp =>
         {
-            var cosmos = sp.GetRequiredService<CosmosClient>();
+            var cosmos = sp.GetRequiredKeyedService<CosmosClient>("ledger");
             var settings = sp.GetRequiredService<IOptions<RtpSendSettings>>().Value;
             return new BatchService(cosmos, settings.LEDGER_COSMOS_DATABASE);
         });
@@ -229,7 +244,7 @@ public static class Program
         // Upstream library's internal client (depends on ILedgerService + IBatchService)
         services.AddSingleton<ILedgerInternalClient, LedgerInternalClient>();
 
-        // RTPSend's ILedgerService — now the adapter, not a NoOp
+        // RTPSend's ILedgerService — the adapter, scoped (matches orchestrator lifetime)
         services.AddScoped<RtpSendILedgerService, EvolveLedgerService>();
     }
 }
