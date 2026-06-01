@@ -1,4 +1,6 @@
 using Azure.Identity;
+using Evolve.Digital.LedgerService.Shared.Internal;
+using Evolve.Digital.LedgerService.Shared.Services;
 using FluentValidation;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
@@ -6,10 +8,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PaymentServices.RTPSend.Helpers;
 using PaymentServices.RTPSend.Interface;
 using PaymentServices.RTPSend.Interface.Adapters;
-using PaymentServices.RTPSend.Interface.External;
 using PaymentServices.RTPSend.Interface.Services;
 using PaymentServices.RTPSend.Providers;
 using PaymentServices.RTPSend.Repositories;
@@ -21,6 +23,10 @@ using PaymentServices.Shared.Extensions;
 using Serilog;
 using Serilog.Events;
 using System.Diagnostics.CodeAnalysis;
+using LedgerLibILedgerService = Evolve.Digital.LedgerService.Shared.Services.ILedgerService;
+using LedgerLibLedgerService = Evolve.Digital.LedgerService.Shared.Services.LedgerService;
+using RtpSendILedgerService = PaymentServices.RTPSend.Interface.External.ILedgerService;
+using RtpSendILimitService = PaymentServices.RTPSend.Interface.External.ILimitService;
 
 namespace PaymentServices.RTPSend;
 
@@ -72,12 +78,13 @@ public static class Program
                 services.AddHttpClient();
                 services.AddHttpContextAccessor();
 
-                // External services — PLACEHOLDERS.
-                // When the real LimitService / LedgerService NuGet packages land,
-                // remove the NoOp registrations below and call their official
-                // AddXxx() extension methods instead.
-                services.AddScoped<ILimitService, NoOpLimitService>();
-                services.AddScoped<ILedgerService, EvolveLedgerService>();
+                // External services
+                //
+                // LimitService is still a placeholder until that NuGet ships.
+                services.AddScoped<RtpSendILimitService, NoOpLimitService>();
+
+                // Real ledger service via Evolve.Digital.LedgerService.Shared(.Internal)
+                RegisterLedgerServices(services);
 
                 // Core business services
                 services.AddScoped<IPartnerLedgerSystem, PartnerLedgerSystem>();
@@ -188,5 +195,41 @@ public static class Program
             var container = config[$"{Prefix}:COSMOS_IDEMPOTENCY_CONTAINER"] ?? "paymentIdempotency";
             return client.GetContainer(database, container);
         });
+    }
+
+    /// <summary>
+    /// Registers the upstream Evolve.Digital.LedgerService.Shared(.Internal)
+    /// services and wires RTPSend's ILedgerService to the adapter
+    /// (EvolveLedgerService) that delegates to ILedgerInternalClient.
+    ///
+    /// Ledger data lives in a SEPARATE Cosmos database from RTPSend's data,
+    /// but in the SAME Cosmos account — so we reuse the registered CosmosClient.
+    /// </summary>
+    private static void RegisterLedgerServices(IServiceCollection services)
+    {
+        // Upstream library's ILedgerService (concrete LedgerService — needs
+        // CosmosClient + database name)
+        services.AddSingleton<LedgerLibILedgerService>(sp =>
+        {
+            var cosmos = sp.GetRequiredService<CosmosClient>();
+            var settings = sp.GetRequiredService<IOptions<RtpSendSettings>>().Value;
+            return new LedgerLibLedgerService(cosmos, settings.LEDGER_COSMOS_DATABASE);
+        });
+
+        // Upstream library's IBatchService — same constructor shape as
+        // LedgerService. If BatchService takes a different signature, swap
+        // this line for whatever its real constructor expects.
+        services.AddSingleton<IBatchService>(sp =>
+        {
+            var cosmos = sp.GetRequiredService<CosmosClient>();
+            var settings = sp.GetRequiredService<IOptions<RtpSendSettings>>().Value;
+            return new BatchService(cosmos, settings.LEDGER_COSMOS_DATABASE);
+        });
+
+        // Upstream library's internal client (depends on ILedgerService + IBatchService)
+        services.AddSingleton<ILedgerInternalClient, LedgerInternalClient>();
+
+        // RTPSend's ILedgerService — now the adapter, not a NoOp
+        services.AddScoped<RtpSendILedgerService, EvolveLedgerService>();
     }
 }
