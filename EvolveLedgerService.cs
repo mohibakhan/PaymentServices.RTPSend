@@ -81,12 +81,18 @@ public sealed class EvolveLedgerService : ILedgerService
         // 4. Post a debit entry (negative amount) tagged with our evolveId
         var metadata = new Dictionary<string, object>
         {
+            // gluId is required by upstream LedgerService.AddEntryAsync — it
+            // accesses metadata["gluId"] via indexer (throws on missing key).
+            // Use a fresh GUID per entry; matches the pattern from upstream
+            // HandleTransactionAsync.
+            { "gluId", Guid.NewGuid().ToString() },
+
+            { "Account", request.FboAccountNumber },     // upstream uses this for AccountNumber field
             { "evolveId", request.EvolveId },
             { "paymentReference", request.PaymentReference },
             { "clientId", request.ClientId },
             { "merchantId", request.MerchantId },
             { "fintechId", request.FintechId },
-            { "Account", request.FboAccountNumber },
             { "endpoint", "rtpsend" }
         };
 
