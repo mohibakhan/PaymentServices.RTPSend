@@ -1,1 +1,19 @@
-{"Response status code does not indicate success: BadRequest (400); Substatus: 1001; ActivityId: f2c594a1-3cd4-4902-ae78-0f345a497867; Reason: (Message: {\"Errors\":[\"PartitionKey extracted from document doesn't match the one specified in the header. Learn more: https://aka.ms/CosmosDB/sql/errors/wrong-pk-value\"]}\r\nActivityId: f2c594a1-3cd4-4902-ae78-0f345a497867, Request URI: /apps/62fb0d96-bb1a-46a1-afc6-6148a88626af/services/054ff3f2-e14c-4655-960e-8f16c614659a/partitions/fb008fcd-f842-45a5-86ab-673ece6ac494/replicas/134230034111687198p, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.26200 cosmos-netstandard-sdk/3.43.1);"}
+{
+    "id": "a0c1b2d3-e4f5-6789-abcd-ef0123456789",
+    "currency": {
+        "name": "US Dollar",
+        "symbol": "USD",
+        "baseUnit": "Cent",
+        "decimals": 2
+    },
+    "lastBalance": 999.1,
+    "metadata": {},
+    "createdAt": "2026-06-01T04:34:44.7419673Z",
+    "updatedAt": "2026-06-01T04:49:01.6263665Z",
+    "ledgerType": "prefund-ledger-v2",
+    "_rid": "uTljALtChTAIAAAAAAAAAA==",
+    "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTAIAAAAAAAAAA==/",
+    "_etag": "\"9902c3fa-0000-0300-0000-6a1d0f3d0000\"",
+    "_attachments": "attachments/",
+    "_ts": 1780289341
+}
