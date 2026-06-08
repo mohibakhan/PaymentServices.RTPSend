@@ -1,27 +1,3 @@
-{
-    "id": "866778c5-fbc2-4c1c-8ff7-0a32afc17213",
-    "evolveId": "866778c5-fbc2-4c1c-8ff7-0a32afc17213",
-    "correlationId": "361c22d4-fc52-4bc9-98a5-e5ab206e9e18",
-    "fintechId": "EAA0617",
-    "amount": "0.10",
-    "taxId": "222222222",
-    "userIsBusiness": false,
-    "state": "transferCompleted",
-    "sourceAccountId": "src-account-0001",
-    "sourceLedgerId": "a0c1b2d3-e4f5-6789-abcd-ef0123456789",
-    "sourceEntityId": "src-customer-0001",
-    "destinationAccountId": "dst-account-0001",
-    "destinationLedgerId": "dst-ledger-0001",
-    "destinationEntityId": "dst-customer-0001",
-    "eveTransactionId": "866778c5-fbc2-4c1c-8ff7-0a32afc17213",
-    "gluIdSource": "60bda6c6-0a34-4a0d-910d-c2add99a3304",
-    "transactionFlags": [],
-    "receivedAt": "2026-06-08T03:29:14.6755768+00:00",
-    "lastUpdatedAt": "2026-06-08T03:29:15.201338+00:00",
-    "ttl": -1,
-    "_rid": "QgghAJ8bC6LcAAAAAAAAAA==",
-    "_self": "dbs/QgghAA==/colls/QgghAJ8bC6I=/docs/QgghAJ8bC6LcAAAAAAAAAA==/",
-    "_etag": "\"9600ed84-0000-0300-0000-6a26370b0000\"",
-    "_attachments": "attachments/",
-    "_ts": 1780889355
-}
+Trigger Details: MessageId: 866778c5-fbc2-4c1c-8ff7-0a32afc17213, SequenceNumber: 230, DeliveryCount: 1, EnqueuedTimeUtc: 2026-06-08T03:29:15.2350000+00:00, LockedUntilUtc: 2026-06-08T03:30:15.2510000+00:00, SessionId: (null)
+
+TchSend accepted. EvolveId=46bb7068-e20e-48c7-b6ca-fba68997119d CorrelationId=469c5a76-d063-493b-92ac-0a921c057ccc
