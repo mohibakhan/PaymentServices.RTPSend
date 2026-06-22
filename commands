@@ -1,62 +1,30 @@
 {
-    "id": "8ad47826-7a4b-4425-b026-cd1e6d095c50",
-    "accountNumber": "111222333444",
+            "stage": "ACCOUNTLOOKUP",
+            "status": "FAILED",
+            "statusDate": "2026-06-22T21:41:17.7213026Z",
+            "addInfo": {
+                "message": "Pipeline failure: TransferFailed",
+                "reason": "Ledger not found for account 9900013724"
+            }
+        }
+
+{
+    "id": "a0c1b2d3-e4f5-6789-abcd-ef0123456789",
+    "accountNumber": "9900013724",
     "currency": {
-        "name": "USD",
+        "name": "US Dollar",
         "symbol": "USD",
         "baseUnit": "Cent",
         "decimals": 2
     },
-    "lastBalance": 0,
-    "metadata": {
-        "accountId": "111222333444"
-    },
-    "createdAt": "2026-06-09T16:34:53.9682656-05:00",
-    "updatedAt": "2026-06-09T16:34:53.9682656-05:00",
+    "lastBalance": 989.2,
+    "metadata": {},
+    "createdAt": "2026-05-31T23:34:44.7419673-05:00",
+    "updatedAt": "2026-06-01T23:12:31.7205818-05:00",
     "ledgerType": "prefund-ledger-v2",
-    "_rid": "uTljALtChTDRGQAAAAAAAA==",
-    "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTDRGQAAAAAAAA==/",
-    "_etag": "\"290060e5-0000-0300-0000-6a39907a0000\"",
+    "_rid": "uTljALtChTAIAAAAAAAAAA==",
+    "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTAIAAAAAAAAAA==/",
+    "_etag": "\"29003fcb-0000-0300-0000-6a3990600000\"",
     "_attachments": "attachments/",
-    "_ts": 1782157434
-}
-
-{
-    "id": "681e7831b509a48664762072",
-    "ledgerId": "681e7830b509a48664761d7a",
-    "accountNumber": "900397186222988",
-    "amount": 0.13,
-    "code": "",
-    "gluId": "ba9f4919-9423-4b12-a436-a7a38666bff0",
-    "trace": {
-        "ValueKind": 1
-    },
-    "transactionId": "",
-    "batchId": "",
-    "status": "",
-    "metadata": {
-        "postedAt": {
-            "ValueKind": 1
-        },
-        "gluId": {
-            "ValueKind": 3
-        },
-        "Account": {
-            "ValueKind": 3
-        },
-        "evolveId": {
-            "ValueKind": 3
-        },
-        "endpoint": {
-            "ValueKind": 3
-        }
-    },
-    "createdAt": "2025-05-09T16:48:33.291-05:00",
-    "updatedAt": "2025-05-09T16:48:33.291-05:00",
-    "kind": "LedgerEntry",
-    "_rid": "uTljAKWT0DBbJwAAAAAAAA==",
-    "_self": "dbs/uTljAA==/colls/uTljAKWT0DA=/docs/uTljAKWT0DBbJwAAAAAAAA==/",
-    "_etag": "\"0903c90e-0000-0300-0000-6a3976c30000\"",
-    "_attachments": "attachments/",
-    "_ts": 1782150851
+    "_ts": 1782157408
 }
