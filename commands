@@ -1,213 +1,111 @@
-using System.Text.Json.Serialization;
-using PaymentServices.Shared.Enums;
-
-namespace PaymentServices.Shared.Models;
-
-// CosmosTransaction — transaction state document
-// Container: tch-send-transactions
-// Partition key: /evolveId
-
-/// <summary>
-/// Persisted transaction state document. Updated at each pipeline stage.
-/// This is the source of truth for any given evolveId.
-/// </summary>
-public sealed class CosmosTransaction
+private async Task GetLedgerByAccount()
 {
-    [JsonPropertyName("id")]
-    public required string Id { get; init; }
-
-    [JsonPropertyName("evolveId")]
-    public required string EvolveId { get; init; }
-
-    [JsonPropertyName("correlationId")]
-    public required string CorrelationId { get; init; }
-
-    [JsonPropertyName("fintechId")]
-    public required string FintechId { get; init; }
-
-    [JsonPropertyName("amount")]
-    public required string Amount { get; init; }
-
-    [JsonPropertyName("taxId")]
-    public required string TaxId { get; init; }
-
-    [JsonPropertyName("userIsBusiness")]
-    public bool UserIsBusiness { get; init; }
-
-    [JsonPropertyName("state")]
-    public TransactionState State { get; set; }
-
-    [JsonPropertyName("sourceAccountId")]
-    public string? SourceAccountId { get; set; }
-
-    [JsonPropertyName("sourceLedgerId")]
-    public string? SourceLedgerId { get; set; }
-
-    [JsonPropertyName("sourceEntityId")]
-    public string? SourceEntityId { get; set; }
-
-    [JsonPropertyName("destinationAccountId")]
-    public string? DestinationAccountId { get; set; }
-
-    [JsonPropertyName("destinationLedgerId")]
-    public string? DestinationLedgerId { get; set; }
-
-    [JsonPropertyName("destinationEntityId")]
-    public string? DestinationEntityId { get; set; }
-
-    [JsonPropertyName("eveTransactionId")]
-    public string? EveTransactionId { get; set; }
-
-    [JsonPropertyName("gluIdSource")]
-    public string? GluIdSource { get; set; }
-
-    [JsonPropertyName("gluIdDestination")]
-    public string? GluIdDestination { get; set; }
-
-    [JsonPropertyName("transactionFlags")]
-    public IReadOnlyList<string> TransactionFlags { get; set; } = [];
-
-    [JsonPropertyName("failureReason")]
-    public string? FailureReason { get; set; }
-
-    [JsonPropertyName("receivedAt")]
-    public DateTimeOffset ReceivedAt { get; init; } = DateTimeOffset.UtcNow;
-
-    [JsonPropertyName("lastUpdatedAt")]
-    public DateTimeOffset LastUpdatedAt { get; set; } = DateTimeOffset.UtcNow;
-
-    /// <summary>TTL in seconds. -1 = never expire. Set to e.g. 7776000 for 90 days.</summary>
-    [JsonPropertyName("ttl")]
-    public int Ttl { get; init; } = -1;
+    try
+    {
+        selectedLedger = await LedgerClient.GetLedgerByAccountAsync(searchAccountNumber);
+        if (selectedLedger == null)
+            ShowStatus("Ledger not found for this account.", true);
+        else
+        {
+            ShowStatus("Ledger found.");
+            ClearData();
+        }
+    }
+    catch (Exception ex)
+    {
+        ShowStatus($"Error: {ex.Message}", true);
+    }
 }
-
-// CosmosIdempotency — deduplication record
-// Container: tch-send-idempotency
-// Partition key: /evolveId
-
-/// <summary>
-/// Short-lived document used to prevent duplicate processing of the same evolveId.
-/// TTL should be set to 86400 (24 hours) at the container level.
-/// </summary>
-public sealed class CosmosIdempotency
+ 
+private void ClearData()
 {
-    [JsonPropertyName("id")]
-    public required string Id { get; init; }
-
-    [JsonPropertyName("evolveId")]
-    public required string EvolveId { get; init; }
-
-    [JsonPropertyName("correlationId")]
-    public required string CorrelationId { get; init; }
-
-    [JsonPropertyName("receivedAt")]
-    public DateTimeOffset ReceivedAt { get; init; } = DateTimeOffset.UtcNow;
-
-    /// <summary>TTL in seconds. Container default: 86400 (24 hours).</summary>
-    [JsonPropertyName("ttl")]
-    public int Ttl { get; init; } = 86400;
+    ledgerEntries.Clear();
+    currentBalance = null;
+    nsfResponse = null;
+    batches.Clear();
+    batchEntries.Clear();
+    selectedBatchId = "";
+    entryStatusUpdate.Clear();
 }
-
-// CosmosAccount — resolved account document
-// Container: tch-accounts
-// Partition key: /accountNumber
-
-/// <summary>
-/// Represents a resolved account in Cosmos DB.
-/// Populated by AccountResolution during onboarding.
-/// Read-only in the payment flow — never written to during tch-send processing.
-/// </summary>
-public sealed class CosmosAccount
+ 
+private async Task AddEntry()
 {
-    [JsonPropertyName("id")]
-    public required string Id { get; init; }
-
-    [JsonPropertyName("accountNumber")]
-    public required string AccountNumber { get; init; }
-
-    [JsonPropertyName("routingNumber")]
-    public required string RoutingNumber { get; init; }
-
-    [JsonPropertyName("entityId")]
-    public required string EntityId { get; init; }
-
-    [JsonPropertyName("ledgerId")]
-    public required string LedgerId { get; init; }
-
-    [JsonPropertyName("remoteAccountId")]
-    public required string RemoteAccountId { get; init; }
-
-    [JsonPropertyName("kind")]
-    public required string Kind { get; init; }
-
-    [JsonPropertyName("fintechId")]
-    public required string FintechId { get; init; }
-
-    [JsonPropertyName("alloyEntityToken")]
-    public string? AlloyEntityToken { get; set; }
-
-    [JsonPropertyName("createdAt")]
-    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
-
-    [JsonPropertyName("updatedAt")]
-    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+    if (selectedLedger == null) return;
+    try
+    {
+        var request = new AddEntryRequest(selectedLedger.id, entryAmount, Kind: entryKind);
+        var entryId = await LedgerClient.AddEntryAsync(request);
+        ShowStatus($"Entry added with ID: {entryId}");
+        await LoadEntries();
+        await FetchBalance();
+    }
+    catch (Exception ex)
+    {
+        ShowStatus($"Error adding entry: {ex.Message}", true);
+    }
 }
-
-// CosmosLedger — ledger document
-// Container: ledgers (existing)
-// Partition key: /ledgerId
-
-/// <summary>
-/// Represents the ledger linked to an account.
-/// The Transfer function writes entries here after TMS clears.
-/// </summary>
-public sealed class CosmosLedger
+ 
+private async Task LoadEntries()
 {
-    [JsonPropertyName("id")]
-    public required string Id { get; init; }
-
-    [JsonPropertyName("ledgerId")]
-    public required string LedgerId { get; init; }
-
-    [JsonPropertyName("accountId")]
-    public required string AccountId { get; init; }
-
-    [JsonPropertyName("balance")]
-    public decimal Balance { get; set; }
-
-    [JsonPropertyName("currency")]
-    public string Currency { get; init; } = "USD";
-
-    [JsonPropertyName("entries")]
-    public List<LedgerEntry> Entries { get; set; } = [];
-
-    [JsonPropertyName("createdAt")]
-    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
-
-    [JsonPropertyName("updatedAt")]
-    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+    if (selectedLedger == null) return;
+    try
+    {
+        var request = new GetLedgerEntriesRequest(selectedLedger.id, Limit: 50);
+        var response = await LedgerClient.GetEntriesAsync(request);
+        ledgerEntries = response.Page;
+        foreach (var entry in ledgerEntries)
+        {
+            if (!entryStatusUpdate.ContainsKey(entry.id))
+                entryStatusUpdate[entry.id] = entry.Status ?? "";
+        }
+    }
+    catch (Exception ex)
+    {
+        ShowStatus($"Error loading entries: {ex.Message}", true);
+    }
 }
-
-/// <summary>
-/// A single debit or credit entry on a ledger.
-/// </summary>
-public sealed class LedgerEntry
+ 
+private async Task UpdateStatus(string entryId)
 {
-    [JsonPropertyName("entryId")]
-    public required string EntryId { get; init; }
-
-    [JsonPropertyName("evolveId")]
-    public required string EvolveId { get; init; }
-
-    [JsonPropertyName("correlationId")]
-    public required string CorrelationId { get; init; }
-
-    [JsonPropertyName("amount")]
-    public required string Amount { get; init; }
-
-    [JsonPropertyName("effect")]
-    public required string Effect { get; init; } // "Debit" | "Credit"
-
-    [JsonPropertyName("createdAt")]
-    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    if (selectedLedger == null) return;
+    try
+    {
+        var status = entryStatusUpdate[entryId];
+        var request = new UpdateEntryStatusRequest(selectedLedger.id, entryId, status);
+        await LedgerClient.UpdateEntryStatusAsync(request);
+        ShowStatus("Status updated.");
+        await LoadEntries();
+    }
+    catch (Exception ex)
+    {
+        ShowStatus($"Error updating status: {ex.Message}", true);
+    }
+}
+ 
+private async Task FetchBalance()
+{
+    if (selectedLedger == null) return;
+    try
+    {
+        currentBalance = await LedgerClient.GetBalanceAsync(selectedLedger.id);
+        // Update selected ledger balance display too
+        selectedLedger.LastBalance = currentBalance.Amount;
+    }
+    catch (Exception ex)
+    {
+        ShowStatus($"Error fetching balance: {ex.Message}", true);
+    }
+}
+ 
+private async Task CheckNsf()
+{
+    if (selectedLedger == null) return;
+    try
+    {
+        nsfResponse = await LedgerClient.CheckNsfAsync(selectedLedger.id, nsfCheckAmount);
+    }
+    catch (Exception ex)
+    {
+        ShowStatus($"Error checking NSF: {ex.Message}", true);
+    }
 }
