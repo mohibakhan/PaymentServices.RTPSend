@@ -1,48 +1,15 @@
-{
-    "paymentReference": "b8613ef-1c5e-1847-97ae-e8d7b99a9ad8",
-    "sourceAccountId": null,
-    "sourceAccount": {
-        "accountNumber": "9010010000000001",
-        "name": {
-            "company": null,
-            "first": "Earnin",
-            "last": "Merchant"
-        },
-        "address": null,
-        "routingNumber": "084009593",
-        "accountType": "S",
-        "debtorBankMemberID": null,
-        "debtorIdOther": null
-    },
-    "destinationAccountId": null,
-    "destinationAccount": {
-        "accountNumber": "900397187386253",
-        "name": {
-            "company": null,
-            "first": "Sarah",
-            "last": "Robinson"
-        },
-        "routingNumber": "101115315",
-        "accountType": "C",
+"softDescriptor": {
+        "name": "Earnin",
+        "email": "support@earnin.com",
+        "phone": null,
         "address": {
             "addressLines": [
-                "123 First Street"
+                "200 Main Street"
             ],
-            "city": "Omaha",
+            "city": "Palo Alto",
             "county": null,
             "countryISOCode": "840",
-            "postalCode": "",
-            "stateCode": "NE"
-        },
-        "phoneNumber": "4022221144",
-        "creditorAgentTCHMemberID": null,
-        "creditorIdOther": null
-    },
-    "amount": "0.90",
-    "ultimateDebtor": {
-        "name": "ultimate"
-    },
-    "sourceCurrency": null,
-    "paymentCurrency": null,
-    "softDescriptor": null
-}
+            "postalCode": "94301",
+            "stateCode": "CA"
+        }
+    }
