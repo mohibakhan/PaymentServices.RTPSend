@@ -1,15 +1,6 @@
-"softDescriptor": {
-        "name": "Earnin",
-        "email": "support@earnin.com",
-        "phone": null,
-        "address": {
-            "addressLines": [
-                "200 Main Street"
-            ],
-            "city": "Palo Alto",
-            "county": null,
-            "countryISOCode": "840",
-            "postalCode": "94301",
-            "stateCode": "CA"
+{
+            "stage": "TABAPAY",
+            "status": "FAILED",
+            "statusDate": "2026-06-23T17:56:17.2229394Z",
+            "addInfo": "{\"Message\":\"softDescriptor.address.line1 required.\"}"
         }
-    }
