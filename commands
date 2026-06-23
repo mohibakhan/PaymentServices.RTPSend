@@ -1,111 +1,48 @@
-private async Task GetLedgerByAccount()
 {
-    try
-    {
-        selectedLedger = await LedgerClient.GetLedgerByAccountAsync(searchAccountNumber);
-        if (selectedLedger == null)
-            ShowStatus("Ledger not found for this account.", true);
-        else
-        {
-            ShowStatus("Ledger found.");
-            ClearData();
-        }
-    }
-    catch (Exception ex)
-    {
-        ShowStatus($"Error: {ex.Message}", true);
-    }
-}
- 
-private void ClearData()
-{
-    ledgerEntries.Clear();
-    currentBalance = null;
-    nsfResponse = null;
-    batches.Clear();
-    batchEntries.Clear();
-    selectedBatchId = "";
-    entryStatusUpdate.Clear();
-}
- 
-private async Task AddEntry()
-{
-    if (selectedLedger == null) return;
-    try
-    {
-        var request = new AddEntryRequest(selectedLedger.id, entryAmount, Kind: entryKind);
-        var entryId = await LedgerClient.AddEntryAsync(request);
-        ShowStatus($"Entry added with ID: {entryId}");
-        await LoadEntries();
-        await FetchBalance();
-    }
-    catch (Exception ex)
-    {
-        ShowStatus($"Error adding entry: {ex.Message}", true);
-    }
-}
- 
-private async Task LoadEntries()
-{
-    if (selectedLedger == null) return;
-    try
-    {
-        var request = new GetLedgerEntriesRequest(selectedLedger.id, Limit: 50);
-        var response = await LedgerClient.GetEntriesAsync(request);
-        ledgerEntries = response.Page;
-        foreach (var entry in ledgerEntries)
-        {
-            if (!entryStatusUpdate.ContainsKey(entry.id))
-                entryStatusUpdate[entry.id] = entry.Status ?? "";
-        }
-    }
-    catch (Exception ex)
-    {
-        ShowStatus($"Error loading entries: {ex.Message}", true);
-    }
-}
- 
-private async Task UpdateStatus(string entryId)
-{
-    if (selectedLedger == null) return;
-    try
-    {
-        var status = entryStatusUpdate[entryId];
-        var request = new UpdateEntryStatusRequest(selectedLedger.id, entryId, status);
-        await LedgerClient.UpdateEntryStatusAsync(request);
-        ShowStatus("Status updated.");
-        await LoadEntries();
-    }
-    catch (Exception ex)
-    {
-        ShowStatus($"Error updating status: {ex.Message}", true);
-    }
-}
- 
-private async Task FetchBalance()
-{
-    if (selectedLedger == null) return;
-    try
-    {
-        currentBalance = await LedgerClient.GetBalanceAsync(selectedLedger.id);
-        // Update selected ledger balance display too
-        selectedLedger.LastBalance = currentBalance.Amount;
-    }
-    catch (Exception ex)
-    {
-        ShowStatus($"Error fetching balance: {ex.Message}", true);
-    }
-}
- 
-private async Task CheckNsf()
-{
-    if (selectedLedger == null) return;
-    try
-    {
-        nsfResponse = await LedgerClient.CheckNsfAsync(selectedLedger.id, nsfCheckAmount);
-    }
-    catch (Exception ex)
-    {
-        ShowStatus($"Error checking NSF: {ex.Message}", true);
-    }
+    "paymentReference": "b8613ef-1c5e-1847-97ae-e8d7b99a9ad8",
+    "sourceAccountId": null,
+    "sourceAccount": {
+        "accountNumber": "9010010000000001",
+        "name": {
+            "company": null,
+            "first": "Earnin",
+            "last": "Merchant"
+        },
+        "address": null,
+        "routingNumber": "084009593",
+        "accountType": "S",
+        "debtorBankMemberID": null,
+        "debtorIdOther": null
+    },
+    "destinationAccountId": null,
+    "destinationAccount": {
+        "accountNumber": "900397187386253",
+        "name": {
+            "company": null,
+            "first": "Sarah",
+            "last": "Robinson"
+        },
+        "routingNumber": "101115315",
+        "accountType": "C",
+        "address": {
+            "addressLines": [
+                "123 First Street"
+            ],
+            "city": "Omaha",
+            "county": null,
+            "countryISOCode": "840",
+            "postalCode": "",
+            "stateCode": "NE"
+        },
+        "phoneNumber": "4022221144",
+        "creditorAgentTCHMemberID": null,
+        "creditorIdOther": null
+    },
+    "amount": "0.90",
+    "ultimateDebtor": {
+        "name": "ultimate"
+    },
+    "sourceCurrency": null,
+    "paymentCurrency": null,
+    "softDescriptor": null
 }
