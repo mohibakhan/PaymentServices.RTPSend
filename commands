@@ -1,6 +1,278 @@
+using System.Security.Cryptography;
+using System.Text;
+using PaymentServices.RTPSend.Constants;
+using PaymentServices.RTPSend.Models.Cosmos;
+using PaymentServices.RTPSend.Models.Domain;
+
+namespace PaymentServices.RTPSend.Helpers;
+
+public static class TabaPayRequestHelper
 {
-            "stage": "TABAPAY",
-            "status": "FAILED",
-            "statusDate": "2026-06-23T17:56:17.2229394Z",
-            "addInfo": "{\"Message\":\"softDescriptor.address.line1 required.\"}"
+    public static TabapayPaymentRequest ConvertEvolveToTabaPayRequest(
+        EvolvePaymentRequest evolve,
+        string sourceAccountId)
+    {
+        var request = new TabapayPaymentRequest
+        {
+            // Deterministic from evolveId so SB redeliveries don't generate
+            // new referenceIDs (which would let TabaPay process the same
+            // logical payment twice).
+            ReferenceId = DeriveReferenceId(evolve.EvolveId),
+            Type = evolve.Type ?? PaymentRequestConstants.CreatePaymentTypePush,
+            AchOptions = evolve.AchOptions ?? PaymentRequestConstants.CreatePaymentAchOptions,
+            Amount = evolve.Amount,
+            Currency = evolve.PaymentCurrency ?? PaymentRequestConstants.CreatePaymentDefaultCurrency,
+            Corresponding = evolve.SourceAccount is null ? null : new Corresponding
+            {
+                Name = evolve.SourceAccount.Name,
+                Address = (TabapayAddress?)evolve.SourceAccount.Address,
+                AccountNumber = evolve.SourceAccount.AccountNumber,
+                SourceOfFunds = "Credit Account"
+            },
+            Accounts = new Accounts
+            {
+                SourceAccountId = sourceAccountId,
+                DestinationAccount = evolve.DestinationAccount is null ? null : new Account
+                {
+                    Bank = new Bank
+                    {
+                        AccountNumber = evolve.DestinationAccount.AccountNumber,
+                        RoutingNumber = evolve.DestinationAccount.RoutingNumber,
+                        AccountType = evolve.DestinationAccount.AccountType
+                    },
+                    Owner = new Owner
+                    {
+                        Name = evolve.DestinationAccount.Name,
+                        Address = (TabapayAddress?)evolve.DestinationAccount.Address,
+                        Phone = new Phone
+                        {
+                            Number = evolve.DestinationAccount.PhoneNumber
+                        }
+                    }
+                }
+            }
+        };
+
+        // Soft descriptor: map into the TabaPay-shaped type and FLATTEN the
+        // address (addressLines[0] -> line1) via the explicit operator, the same
+        // way source/destination addresses are converted. Without this, TabaPay
+        // rejects with "softDescriptor.address.line1 required."
+        if (evolve.SoftDescriptor is not null)
+        {
+            request.SoftDescriptor = new TabapaySoftDescriptor
+            {
+                Name = evolve.SoftDescriptor.Name,
+                Email = evolve.SoftDescriptor.Email,
+                Phone = evolve.SoftDescriptor.Phone,
+                Address = (TabapayAddress?)evolve.SoftDescriptor.Address
+            };
         }
+
+        if (!string.IsNullOrWhiteSpace(evolve.RemittanceInformation))
+            request.Memo = evolve.RemittanceInformation;
+
+        return request;
+    }
+
+    /// <summary>
+    /// Derives a deterministic 15-character referenceID from the evolveId.
+    /// Same evolveId always produces the same referenceID
+    /// </summary>
+    public static string DeriveReferenceId(string evolveId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(evolveId);
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(evolveId));
+        return Base32EncodeFirst15(hash);
+    }
+
+    private static string Base32EncodeFirst15(byte[] bytes)
+    {
+        // RFC 4648 base32 alphabet (no padding)
+        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+        // 15 base32 chars need 75 bits. Read 10 bytes (80 bits), emit 15 chars.
+        // We don't pad — slice exactly 15 chars off the front.
+        Span<char> result = stackalloc char[15];
+
+        int bitBuffer = 0;
+        int bitCount = 0;
+        int byteIndex = 0;
+        int outputIndex = 0;
+
+        while (outputIndex < 15)
+        {
+            // Refill bit buffer from next input byte
+            while (bitCount < 5 && byteIndex < bytes.Length)
+            {
+                bitBuffer = (bitBuffer << 8) | bytes[byteIndex++];
+                bitCount += 8;
+            }
+
+            // Extract top 5 bits
+            int alphabetIndex = (bitBuffer >> (bitCount - 5)) & 0x1F;
+            bitCount -= 5;
+            result[outputIndex++] = alphabet[alphabetIndex];
+        }
+
+        return new string(result);
+    }
+}
+
+
+
+
+
+
+
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
+namespace PaymentServices.RTPSend.Models.Domain;
+
+/// <summary>
+/// Request body sent to TabaPay's create-transaction endpoint.
+/// Conversion from <see cref="Cosmos.EvolvePaymentRequest"/> is done by
+/// <see cref="Helpers.TabaPayRequestHelper.ConvertEvolveToTabaPayRequest"/> —
+/// we don't define implicit/explicit operators here.
+/// </summary>
+public class TabapayPaymentRequest
+{
+    [JsonPropertyName("referenceID")]
+    [MinLength(1)]
+    [MaxLength(15)]
+    public string ReferenceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("corresponding")]
+    public Corresponding? Corresponding { get; set; }
+
+    /// <summary>"push" or "pull"</summary>
+    [JsonPropertyName("type")]
+    [MinLength(4)]
+    [MaxLength(4)]
+    public string Type { get; set; } = string.Empty;
+
+    /// <summary>"R" = RTP</summary>
+    [JsonPropertyName("achOptions")]
+    public string AchOptions { get; set; } = string.Empty;
+
+    [JsonPropertyName("accounts")]
+    public Accounts? Accounts { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string Currency { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public string Amount { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional soft descriptor — TabaPay displays this on the cardholder's
+    /// statement instead of the merchant's default descriptor.
+    /// Uses the TabaPay-shaped type so the address carries line1 (TabaPay
+    /// requires softDescriptor.address.line1 when a soft descriptor is sent).
+    /// </summary>
+    [JsonPropertyName("softDescriptor")]
+    public TabapaySoftDescriptor? SoftDescriptor { get; set; }
+
+    /// <summary>
+    /// Free-text payment purpose. TabaPay propagates this into the outbound
+    /// PACS.008 &lt;RmtInf&gt; block, which the receiving bank surfaces on
+    /// the recipient's statement. Max 140 chars per ISO 20022.
+    /// </summary>
+    [JsonPropertyName("memo")]
+    [MaxLength(140)]
+    public string? Memo { get; set; }
+}
+
+public class Accounts
+{
+    /// <summary>22-character TabaPay account ID; use Settlement Account ID for push transactions.</summary>
+    [JsonPropertyName("sourceAccountID")]
+    [MinLength(22)]
+    [MaxLength(22)]
+    public string? SourceAccountId { get; set; }
+
+    /// <summary>Use sourceAccount XOR sourceAccountID. sourceAccount valid on pull only.</summary>
+    [JsonPropertyName("sourceAccount")]
+    public Account? SourceAccount { get; set; }
+
+    /// <summary>22-character TabaPay account ID; use Settlement Account ID for pull transactions.</summary>
+    [JsonPropertyName("destinationAccountID")]
+    [MinLength(22)]
+    [MaxLength(22)]
+    public string? DestinationAccountId { get; set; }
+
+    /// <summary>Use destinationAccount XOR destinationAccountID. destinationAccount valid on push only.</summary>
+    [JsonPropertyName("destinationAccount")]
+    public Account? DestinationAccount { get; set; }
+}
+
+public class Account
+{
+    [JsonPropertyName("bank")]
+    public Bank? Bank { get; set; }
+
+    [JsonPropertyName("owner")]
+    public Owner? Owner { get; set; }
+}
+
+public class Bank
+{
+    [JsonPropertyName("accountNumber")]
+    public string? AccountNumber { get; set; }
+
+    [JsonPropertyName("routingNumber")]
+    public string? RoutingNumber { get; set; }
+
+    [JsonPropertyName("accountType")]
+    public string? AccountType { get; set; }
+}
+
+public class Owner
+{
+    [JsonPropertyName("name")]
+    public AccountName? Name { get; set; }
+
+    [JsonPropertyName("address")]
+    public TabapayAddress? Address { get; set; }
+
+    [JsonPropertyName("phone")]
+    public Phone? Phone { get; set; }
+}
+
+public class Corresponding
+{
+    [JsonPropertyName("name")]
+    public AccountName? Name { get; set; }
+
+    [JsonPropertyName("address")]
+    public TabapayAddress? Address { get; set; }
+
+    [JsonPropertyName("accountNumber")]
+    public string? AccountNumber { get; set; }
+
+    [JsonPropertyName("sourceOfFunds")]
+    public string? SourceOfFunds { get; set; }
+}
+
+/// <summary>
+/// TabaPay-shaped soft descriptor. Mirrors <see cref="SoftDescriptor"/> but
+/// carries a <see cref="TabapayAddress"/> (line1/line2/city/state/zipcode/
+/// country) instead of the multi-line <see cref="Address"/>, because TabaPay
+/// requires <c>softDescriptor.address.line1</c>. The domain Address is
+/// flattened into this shape via the explicit (TabapayAddress) operator.
+/// </summary>
+public class TabapaySoftDescriptor
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
+
+    [JsonPropertyName("phone")]
+    public Phone? Phone { get; set; }
+
+    [JsonPropertyName("address")]
+    public TabapayAddress? Address { get; set; }
+}
