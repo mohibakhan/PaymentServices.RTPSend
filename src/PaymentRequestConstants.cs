@@ -1,0 +1,29 @@
+namespace PaymentServices.RTPSend.Constants;
+
+public static class PaymentRequestConstants
+{
+    public const string DocumentType = "CreatePayment";
+    public const string DocumentSubTypeTabaPay = "TabaPay";
+
+    public const string TransactionCompleted = "Completed";
+    public const string TransactionFailed = "Failed";
+
+    // Service Bus — platform-fixed names (do not vary by environment)
+    public const string ServiceBusTopicName = "payment-processing";
+    public const string ServiceBusProcessSubscriptionName = "rtpsend-process";
+
+    // Service Bus subjects — discriminator on the published envelope
+    public const string CreatePaymentRequestSubject = "CreatePaymentRequest";
+    public const string SuccessServiceBusSubject = "CreatePayment - Success";
+    public const string FailureServiceBusSubject = "CreatePayment - Failure";
+
+    // Subject stamped on TabaPay retry messages; the rtpsend-tabapay-retry
+    // subscription filters on it so no other subscriber picks them up.
+    public const string TabaPaySendRetrySubject = "TabaPaySendRetry";
+
+    public const string CreatePaymentTypePush = "push";
+    public const string CreatePaymentAchOptions = "R";
+    public const string CreatePaymentDefaultCurrency = "840";
+
+    public const string TabaPayComplete = "COMPLETED";
+}
